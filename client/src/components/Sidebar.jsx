@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HexColorPicker } from 'react-colorful';
 import {
   Menu, Image as ImageIcon, Upload, Download, Edit3, ChevronDown,
-  ImagePlus, Palette, Type
+  ImagePlus, Palette, Type, Save, Trash2
 } from 'lucide-react';
 import useStore from '../store';
 
@@ -15,7 +15,7 @@ const pickerStyles = `
 `;
 
 export default function Sidebar({
-  onUpload,
+  onOpenTemplateManager,
   onUploadImage,
   images,
   onSelectImage,
@@ -23,11 +23,13 @@ export default function Sidebar({
   texts,
   onOpenTextModal,
   onSelectText,
-  onDeleteText
+  onDeleteText,
+  onSaveTemplate,
+  onDeleteTemplate,
+  canManageTemplate
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(null);
-  const fileInputRef = useRef(null);
 
   const {
     isUploading,
@@ -38,12 +40,25 @@ export default function Sidebar({
   } = useStore();
 
   const toggleSection = (section) => setActiveSection(activeSection === section ? null : section);
-  const handleUploadClick = () => fileInputRef.current.click();
+  const handleUploadClick = () => {
+    setIsOpen(false);
+    onOpenTemplateManager();
+  };
   const handleExportClick = () => { setIsOpen(false); startExport(); };
-  const handleChangeColorClick = () => { setInteractionMode('color'); setIsOpen(false); };
+  const handleChangeColorClick = () => {
+    if (!canManageTemplate) return;
+    setInteractionMode('color');
+    setIsOpen(false);
+  };
   const handleImageUploadClick = () => {
+    if (!canManageTemplate) return;
     setIsOpen(false);
     onUploadImage();
+  };
+  const handleOpenTextClick = () => {
+    if (!canManageTemplate) return;
+    setIsOpen(false);
+    onOpenTextModal();
   };
 
   // --- OPTIMIZED VARIANTS (Snappy, Premium Feel) ---
@@ -115,7 +130,7 @@ export default function Sidebar({
                   transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingLeft: '12px', marginBottom: '8px', borderLeft: '1px solid #333', marginLeft: '12px' }}>
-                    <SidebarButton icon={<ImagePlus size={14} />} label="Upload Image" onClick={handleImageUploadClick} small />
+                    <SidebarButton icon={<ImagePlus size={14} />} label="Upload Image" onClick={handleImageUploadClick} small disabled={!canManageTemplate} />
                     {images.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '6px 0 2px 28px' }}>
                         {images.map((image) => (
@@ -177,8 +192,8 @@ export default function Sidebar({
                         ))}
                       </div>
                     )}
-                    <SidebarButton icon={<Palette size={14} />} label="Change Color" onClick={handleChangeColorClick} small />
-                    <SidebarButton icon={<Type size={14} />} label="Import Text" onClick={() => { setIsOpen(false); onOpenTextModal(); }} small />
+                    <SidebarButton icon={<Palette size={14} />} label="Change Color" onClick={handleChangeColorClick} small disabled={!canManageTemplate} />
+                    <SidebarButton icon={<Type size={14} />} label="Import Text" onClick={handleOpenTextClick} small disabled={!canManageTemplate} />
                     {texts.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '6px 0 2px 28px' }}>
                         {texts.map((text) => (
@@ -272,12 +287,33 @@ export default function Sidebar({
           </div>
         </div>
 
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <SectionHeader>SCENE</SectionHeader>
+          <SidebarButton
+            icon={<Save size={16} />}
+            label="SAVE"
+            onClick={() => { setIsOpen(false); onSaveTemplate(); }}
+            disabled={!canManageTemplate}
+          />
+          <SidebarButton
+            icon={<Trash2 size={16} />}
+            label="DELETE"
+            onClick={() => { setIsOpen(false); onDeleteTemplate(); }}
+            disabled={!canManageTemplate}
+          />
+        </div>
+
         <div style={{ flex: 1 }} />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <SectionHeader>ACTIONS</SectionHeader>
-          <input type="file" ref={fileInputRef} onChange={onUpload} accept=".blend" style={{ display: 'none' }} />
-          <SidebarButton icon={isUploading ? <LoadingSpinner /> : <Upload size={16} />} label={isUploading ? "PROCESSING..." : "IMPORT MODEL"} onClick={handleUploadClick} primary disabled={isUploading} />
+          <SidebarButton
+            icon={isUploading ? <LoadingSpinner /> : <Upload size={16} />}
+            label={isUploading ? "PROCESSING..." : "IMPORT MODEL"}
+            onClick={handleUploadClick}
+            primary
+            disabled={isUploading}
+          />
           <SidebarButton icon={<Download size={16} />} label="EXPORT RENDER" onClick={handleExportClick} />
         </div>
       </motion.div>

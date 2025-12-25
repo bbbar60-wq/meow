@@ -204,7 +204,7 @@ function createTextTexture(textConfig) {
   return { texture, width: canvas.width, height: canvas.height };
 }
 
-export default function ModelViewer({ url, images, texts }) {
+export default function ModelViewer({ url, images, texts, materialOverrides = {}, onMaterialColorChange }) {
   const { scene } = useGLTF(url);
   const { gl } = useThree(); // Access the renderer to get max anisotropy
   const { interactionMode, setInteractionMode } = useStore();
@@ -292,6 +292,20 @@ export default function ModelViewer({ url, images, texts }) {
     }
   }, [scene, gl]);
 
+  useEffect(() => {
+    if (!scene) return;
+    scene.traverse((child) => {
+      if (child.isMesh && child.material) {
+        const materialKey = child.name || child.uuid;
+        const savedColor = materialOverrides[materialKey];
+        if (savedColor) {
+          child.material.color.set(savedColor);
+          child.material.needsUpdate = true;
+        }
+      }
+    });
+  }, [scene, materialOverrides]);
+
   // --- HANDLERS ---
   const handlePointerOver = (e) => {
     if (interactionMode === 'color') {
@@ -319,7 +333,12 @@ export default function ModelViewer({ url, images, texts }) {
   };
 
   const handleColorChange = (newColor) => {
-    if (selectedMesh?.material) selectedMesh.material.color.set(newColor);
+    if (selectedMesh?.material) {
+      selectedMesh.material.color.set(newColor);
+      if (onMaterialColorChange) {
+        onMaterialColorChange(selectedMesh.name || selectedMesh.uuid, newColor);
+      }
+    }
   };
 
   return (

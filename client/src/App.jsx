@@ -1,15 +1,17 @@
-import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html, useProgress, GizmoHelper, GizmoViewport, Lightformer } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette, SSAO, ToneMapping } from '@react-three/postprocessing';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
+import { CheckCircle2, Cloud } from 'lucide-react';
 
 import useStore from './store';
 import ModelViewer from './components/ModelViewer';
 import Sidebar from './components/Sidebar';
 import ExportEngine from './components/ExportEngine';
+import TemplateManagerModal from './components/TemplateManagerModal';
 
 // --- MINIMAL LOADER ---
 function Loader() {
@@ -79,22 +81,54 @@ function App() {
     setError,
     backgroundColor,
     interactionMode,
-    setInteractionMode
+    setInteractionMode,
+    setBackgroundColor
   } = useStore();
   const imageInputRef = useRef(null);
+  const templateInputRef = useRef(null);
+  const rendererRef = useRef(null);
   const [images, setImages] = useState([]);
   const [activeImageId, setActiveImageId] = useState(null);
   const [texts, setTexts] = useState([]);
   const [activeTextId, setActiveTextId] = useState(null);
   const [isTextModalOpen, setIsTextModalOpen] = useState(false);
   const [editingTextId, setEditingTextId] = useState(null);
+  const [materialOverrides, setMaterialOverrides] = useState({});
+  const [templates, setTemplates] = useState([]);
+  const [activeTemplateId, setActiveTemplateId] = useState(null);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [saveState, setSaveState] = useState('idle');
+  const saveTimeoutRef = useRef(null);
+  const templateDataRef = useRef({});
+  const api = useMemo(() => axios.create({ baseURL: 'http://localhost:5000' }), []);
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        const response = await api.get('/templates');
+        setTemplates(response.data);
+      } catch (error) {
+        console.error('Failed to load templates', error);
+      }
+    };
+    loadTemplates();
+  }, [api]);
+
+  useEffect(() => {
+    templateDataRef.current = {
+      modelUrl,
+      backgroundColor,
+      images,
+      texts,
+      materialOverrides
+    };
+  }, [modelUrl, backgroundColor, images, texts, materialOverrides]);
+
+  const uploadBlendFile = async (file) => {
     if (!file.name.endsWith('.blend')) {
       alert("Please upload a .blend file");
-      return;
+      return null;
     }
     setUploading(true);
     setError(null);
@@ -104,10 +138,11 @@ function App() {
       const response = await axios.post('http://localhost:5000/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setModelUrl(response.data.url);
+      return response.data.url;
     } catch (err) {
       console.error(err);
       alert("Failed to process file.");
+      return null;
     } finally {
       setUploading(false);
     }
@@ -119,10 +154,22 @@ function App() {
     }
   };
 
-  const handleImageFileChange = (event) => {
+  const handleImageFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    const objectUrl = URL.createObjectURL(file);
+    let objectUrl = null;
+    try {
+      objectUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+    } catch (error) {
+      console.error('Failed to read image file', error);
+      event.target.value = '';
+      return;
+    }
     const newImage = {
       id: `${Date.now()}-${file.name}`,
       name: file.name,
@@ -217,13 +264,142 @@ function App() {
     );
   };
 
+  const handleMaterialColorChange = (meshKey, color) => {
+    setMaterialOverrides((prev) => ({ ...prev, [meshKey]: color }));
+  };
+
   const activeImage = images.find((image) => image.id === activeImageId);
   const activeText = texts.find((text) => text.id === activeTextId);
+
+  const capturePreview = useCallback(() => {
+    if (!rendererRef.current) return null;
+    return new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        try {
+          resolve(rendererRef.current.domElement.toDataURL('image/png'));
+        } catch (error) {
+          console.warn('Preview capture failed', error);
+          resolve(null);
+        }
+      });
+    });
+  }, []);
+
+  const triggerSaveIndicator = useCallback(() => {
+    setSaveState('saved');
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => setSaveState('idle'), 5000);
+  }, []);
+
+  const saveTemplate = useCallback(async (templateId = activeTemplateId) => {
+    if (!templateId) return;
+    const previewUrl = await capturePreview();
+    const data = templateDataRef.current;
+    const existing = templates.find((template) => template.id === templateId);
+    try {
+      const response = await api.put(`/templates/${templateId}`, {
+        name: existing?.name,
+        ...data,
+        previewUrl: previewUrl || existing?.previewUrl
+      });
+      setTemplates((prev) =>
+        prev.map((template) => (template.id === templateId ? response.data : template))
+      );
+      triggerSaveIndicator();
+    } catch (error) {
+      console.error('Failed to save template', error);
+    }
+  }, [activeTemplateId, api, capturePreview, templates, triggerSaveIndicator]);
+
+  const handleDeleteTemplate = useCallback(async (templateId) => {
+    try {
+      await api.delete(`/templates/${templateId}`);
+      setTemplates((prev) => prev.filter((template) => template.id !== templateId));
+      if (templateId === activeTemplateId) {
+        setActiveTemplateId(null);
+        setModelUrl(null);
+        setImages([]);
+        setTexts([]);
+        setMaterialOverrides({});
+        setBackgroundColor('#252525');
+      }
+    } catch (error) {
+      console.error('Failed to delete template', error);
+    }
+  }, [activeTemplateId, api, setBackgroundColor, setModelUrl]);
+
+  const handleOpenTemplate = (template) => {
+    setModelUrl(template.modelUrl);
+    setImages(template.images || []);
+    setTexts(template.texts || []);
+    setMaterialOverrides(template.materialOverrides || {});
+    setBackgroundColor(template.backgroundColor || '#252525');
+    setActiveTemplateId(template.id);
+    setIsTemplateModalOpen(false);
+  };
+
+  const handleRequestTemplateUpload = () => {
+    if (templateInputRef.current) {
+      templateInputRef.current.click();
+    }
+  };
+
+  const handleTemplateUpload = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    const url = await uploadBlendFile(file);
+    if (!url) return;
+
+    setModelUrl(url);
+    setImages([]);
+    setTexts([]);
+    setMaterialOverrides({});
+    setBackgroundColor('#252525');
+
+    const templateName = file.name.replace(/\.[^/.]+$/, '');
+    try {
+      const response = await api.post('/templates', {
+        name: templateName || 'Untitled Template',
+        modelUrl: url,
+        backgroundColor: '#252525',
+        images: [],
+        texts: [],
+        materialOverrides: {},
+        previewUrl: null
+      });
+      setTemplates((prev) => [response.data, ...prev]);
+      setActiveTemplateId(response.data.id);
+      setIsTemplateModalOpen(false);
+
+      setTimeout(() => {
+        saveTemplate(response.data.id);
+      }, 600);
+    } catch (error) {
+      console.error('Failed to create template', error);
+    }
+  };
+
+  useEffect(() => {
+    if (!activeTemplateId) return undefined;
+    const interval = setInterval(() => {
+      saveTemplate(activeTemplateId);
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [activeTemplateId, saveTemplate]);
+
+  useEffect(() => () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+  }, []);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', background: '#000' }}>
       <Sidebar
-        onUpload={handleFileUpload}
+        onOpenTemplateManager={() => setIsTemplateModalOpen(true)}
         onUploadImage={handleRequestImageUpload}
         images={images}
         onSelectImage={handleSelectImage}
@@ -232,12 +408,22 @@ function App() {
         onOpenTextModal={handleOpenTextModal}
         onSelectText={handleSelectText}
         onDeleteText={handleDeleteText}
+        onSaveTemplate={() => saveTemplate(activeTemplateId)}
+        onDeleteTemplate={() => setPendingDeleteId(activeTemplateId)}
+        canManageTemplate={Boolean(activeTemplateId)}
       />
       <input
         ref={imageInputRef}
         type="file"
         accept="image/*"
         onChange={handleImageFileChange}
+        style={{ display: 'none' }}
+      />
+      <input
+        ref={templateInputRef}
+        type="file"
+        accept=".blend"
+        onChange={handleTemplateUpload}
         style={{ display: 'none' }}
       />
       <ExportOverlay />
@@ -257,6 +443,7 @@ function App() {
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.shadowMap.enabled = true;
           gl.shadowMap.type = THREE.PCFSoftShadowMap;
+          rendererRef.current = gl;
         }}
         // Detect clicks on the empty background
         onPointerMissed={handleCanvasMiss}
@@ -292,6 +479,8 @@ function App() {
                 url={modelUrl}
                 images={images}
                 texts={texts}
+                materialOverrides={materialOverrides}
+                onMaterialColorChange={handleMaterialColorChange}
               />
               <ContactShadows resolution={1024} scale={20} blur={2.5} opacity={0.45} far={12} color="#000000" frames={1} />
             </group>
@@ -330,6 +519,53 @@ function App() {
         />
       </Canvas>
 
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '28px',
+          right: '32px',
+          zIndex: 35,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px 12px',
+          borderRadius: '999px',
+          background: 'rgba(0,0,0,0.5)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          color: '#cfcfcf',
+          fontSize: '11px',
+          letterSpacing: '1px'
+        }}
+      >
+        <AnimatePresence mode="wait">
+          {saveState === 'saved' ? (
+            <motion.div
+              key="saved"
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.6, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <CheckCircle2 size={16} color="#7dff9b" />
+              <span>Saved</span>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="idle"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Cloud size={16} color="#cfcfcf" />
+              <span>Auto-save</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       {activeImage && (
         <AssetEditorPanel
           image={activeImage}
@@ -358,6 +594,27 @@ function App() {
           onSubmit={handleSaveText}
         />
       )}
+
+      <TemplateManagerModal
+        isOpen={isTemplateModalOpen}
+        templates={templates}
+        onClose={() => setIsTemplateModalOpen(false)}
+        onSelectTemplate={handleOpenTemplate}
+        onRequestUpload={handleRequestTemplateUpload}
+        onRequestDelete={(templateId) => setPendingDeleteId(templateId)}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingDeleteId)}
+        title="Delete this template?"
+        description="This action will permanently remove the template and its saved scene data."
+        confirmLabel="Delete"
+        onCancel={() => setPendingDeleteId(null)}
+        onConfirm={() => {
+          handleDeleteTemplate(pendingDeleteId);
+          setPendingDeleteId(null);
+        }}
+      />
     </div>
   );
 }
@@ -836,5 +1093,78 @@ function TextEditorModal({ initialText, onCancel, onSubmit }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function ConfirmDialog({ isOpen, title, description, confirmLabel, onCancel, onConfirm }) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 90,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              width: '380px',
+              maxWidth: '90vw',
+              background: '#111',
+              borderRadius: '14px',
+              border: '1px solid #222',
+              padding: '20px',
+              color: '#eee',
+              boxShadow: '0 30px 90px rgba(0,0,0,0.6)'
+            }}
+          >
+            <div style={{ fontSize: '13px', letterSpacing: '1px', marginBottom: '8px' }}>{title}</div>
+            <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5 }}>{description}</div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+              <button
+                onClick={onCancel}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #333',
+                  color: '#aaa',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onConfirm}
+                style={{
+                  background: '#ff5c5c',
+                  border: '1px solid #ff5c5c',
+                  color: '#111',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                {confirmLabel}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
