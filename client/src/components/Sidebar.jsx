@@ -14,17 +14,37 @@ const pickerStyles = `
 .custom-picker .react-colorful__pointer { width: 16px; height: 16px; }
 `;
 
-export default function Sidebar({ onUpload }) {
+export default function Sidebar({
+  onUpload,
+  onUploadImage,
+  images,
+  onSelectImage,
+  onDeleteImage,
+  texts,
+  onOpenTextModal,
+  onSelectText,
+  onDeleteText
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(null);
   const fileInputRef = useRef(null);
 
-  const { isUploading, backgroundColor, setBackgroundColor, startExport, setInteractionMode } = useStore();
+  const {
+    isUploading,
+    backgroundColor,
+    setBackgroundColor,
+    startExport,
+    setInteractionMode
+  } = useStore();
 
   const toggleSection = (section) => setActiveSection(activeSection === section ? null : section);
   const handleUploadClick = () => fileInputRef.current.click();
   const handleExportClick = () => { setIsOpen(false); startExport(); };
   const handleChangeColorClick = () => { setInteractionMode('color'); setIsOpen(false); };
+  const handleImageUploadClick = () => {
+    setIsOpen(false);
+    onUploadImage();
+  };
 
   // --- OPTIMIZED VARIANTS (Snappy, Premium Feel) ---
   const sidebarVariants = {
@@ -76,7 +96,7 @@ export default function Sidebar({ onUpload }) {
         style={{
           position: 'fixed', top: 0, left: 0, width: '280px', height: '100vh',
           boxSizing: 'border-box',
-          background: '#0f0f0f', // Solid dark for better performance than blur
+          background: '#0f0f0f',
           borderRight: '1px solid #222',
           zIndex: 45, padding: '80px 24px 30px 24px',
           display: 'flex', flexDirection: 'column'
@@ -95,9 +115,136 @@ export default function Sidebar({ onUpload }) {
                   transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingLeft: '12px', marginBottom: '8px', borderLeft: '1px solid #333', marginLeft: '12px' }}>
-                    <SidebarButton icon={<ImagePlus size={14} />} label="Upload Image" onClick={() => {}} small />
+                    <SidebarButton icon={<ImagePlus size={14} />} label="Upload Image" onClick={handleImageUploadClick} small />
+                    {images.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '6px 0 2px 28px' }}>
+                        {images.map((image) => (
+                          <div
+                            key={image.id}
+                            onClick={() => { setIsOpen(false); onSelectImage(image.id); }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              background: '#121212',
+                              border: '1px solid #222',
+                              borderRadius: '6px',
+                              padding: '6px',
+                              cursor: 'pointer',
+                              color: '#bbb',
+                              fontSize: '11px',
+                              textAlign: 'left'
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter') {
+                                setIsOpen(false);
+                                onSelectImage(image.id);
+                              }
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '4px',
+                                backgroundImage: `url(${image.url})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center'
+                              }}
+                            />
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
+                              {image.name}
+                            </span>
+                            <button
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onDeleteImage(image.id);
+                              }}
+                              style={{
+                                marginLeft: 'auto',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#666',
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <SidebarButton icon={<Palette size={14} />} label="Change Color" onClick={handleChangeColorClick} small />
-                    <SidebarButton icon={<Type size={14} />} label="Import Text" onClick={() => {}} small />
+                    <SidebarButton icon={<Type size={14} />} label="Import Text" onClick={() => { setIsOpen(false); onOpenTextModal(); }} small />
+                    {texts.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '6px 0 2px 28px' }}>
+                        {texts.map((text) => (
+                          <div
+                            key={text.id}
+                            onClick={() => { setIsOpen(false); onSelectText(text.id); }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              background: '#121212',
+                              border: '1px solid #222',
+                              borderRadius: '6px',
+                              padding: '6px',
+                              cursor: 'pointer',
+                              color: '#bbb',
+                              fontSize: '11px',
+                              textAlign: 'left'
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter') {
+                                setIsOpen(false);
+                                onSelectText(text.id);
+                              }
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '4px',
+                                background: '#1f1f1f',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '10px',
+                                color: '#777'
+                              }}
+                            >
+                              T
+                            </div>
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
+                              {text.name}
+                            </span>
+                            <button
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onDeleteText(text.id);
+                              }}
+                              style={{
+                                marginLeft: 'auto',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#666',
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}

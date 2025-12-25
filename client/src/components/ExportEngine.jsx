@@ -44,6 +44,7 @@ export default function ExportEngine() {
         // This creates a 4K+ resolution image even on standard screens.
         const highQualityRatio = Math.min(window.devicePixelRatio * 4, 4);
         gl.setPixelRatio(highQualityRatio);
+        gl.shadowMap.needsUpdate = true;
 
         // Force a clear and render at high res
         // Note: If using EffectComposer, it usually auto-renders, but explicit render ensures update
