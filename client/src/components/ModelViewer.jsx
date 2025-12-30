@@ -253,17 +253,16 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
              if (!child.userData.isOptimized) {
                child.material = child.material.clone();
 
-               // REALISM: Boost environmental reflections slightly
-               child.material.envMapIntensity = 1.3;
+               // REALISM: Softer reflections for a studio matte finish
+               child.material.envMapIntensity = 0.65;
 
-               // REALISM: Ensure materials aren't perfectly smooth (which looks fake)
-               // We clamp roughness to a minimum of 0.05 so nothing is infinitely sharp
-               child.material.roughness = Math.max(0.05, child.material.roughness);
+               // REALISM: Push surfaces toward a gentle matte look
+               child.material.roughness = Math.max(0.45, child.material.roughness ?? 0.65);
 
                if (child.material.isMeshStandardMaterial) {
-                 child.material.metalness = Math.min(0.3, child.material.metalness ?? 0.1);
-                 child.material.clearcoat = 0.15;
-                 child.material.clearcoatRoughness = 0.4;
+                 child.material.metalness = Math.min(0.08, child.material.metalness ?? 0.03);
+                 child.material.clearcoat = 0.04;
+                 child.material.clearcoatRoughness = 0.65;
                  child.material.flatShading = false;
                }
 

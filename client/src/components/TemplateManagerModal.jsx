@@ -18,9 +18,15 @@ export default function TemplateManagerModal({
   onClose,
   onSelectTemplate,
   onRequestUpload,
-  onRequestDelete
+  onRequestDelete,
+  onOpenTemplate,
+  onUploadTemplate,
+  onDeleteTemplate
 }) {
   const [hoveredId, setHoveredId] = useState(null);
+  const handleSelectTemplate = onSelectTemplate ?? onOpenTemplate;
+  const handleRequestUpload = onRequestUpload ?? onUploadTemplate;
+  const handleRequestDelete = onRequestDelete ?? onDeleteTemplate;
 
   const sortedTemplates = useMemo(
     () => [...templates].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)),
@@ -104,16 +110,25 @@ export default function TemplateManagerModal({
                   key={template.id}
                   onMouseEnter={() => setHoveredId(template.id)}
                   onMouseLeave={() => setHoveredId(null)}
+                  onClick={() => handleSelectTemplate?.(template)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      handleSelectTemplate?.(template);
+                    }
+                  }}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '72px 1fr 140px 100px',
+                    gridTemplateColumns: '72px 1fr 140px 140px',
                     alignItems: 'center',
                     gap: '16px',
                     padding: '12px',
                     borderRadius: '12px',
                     border: '1px solid #1f1f1f',
                     background: hoveredId === template.id ? '#141414' : '#0f0f0f',
-                    transition: 'background 0.2s'
+                    transition: 'background 0.2s',
+                    cursor: 'pointer'
                   }}
                 >
                   <div
@@ -144,9 +159,12 @@ export default function TemplateManagerModal({
                   <div style={{ fontSize: '11px', color: '#777', textAlign: 'right' }}>
                     {formatDate(template.createdAt)}
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', opacity: hoveredId === template.id ? 1 : 0, transition: 'opacity 0.2s' }}>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', opacity: hoveredId === template.id ? 1 : 0.9, transition: 'opacity 0.2s' }}>
                     <button
-                      onClick={() => onSelectTemplate(template)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleSelectTemplate?.(template);
+                      }}
                       style={{
                         border: '1px solid #333',
                         background: '#111',
@@ -164,7 +182,10 @@ export default function TemplateManagerModal({
                       Edit
                     </button>
                     <button
-                      onClick={() => onRequestDelete(template.id)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleRequestDelete?.(template.id);
+                      }}
                       style={{
                         border: '1px solid #332222',
                         background: '#160d0d',
@@ -188,7 +209,10 @@ export default function TemplateManagerModal({
 
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button
-                onClick={onRequestUpload}
+                onClick={() => {
+                  handleRequestUpload?.();
+                  onClose();
+                }}
                 style={{
                   background: '#fff',
                   color: '#111',

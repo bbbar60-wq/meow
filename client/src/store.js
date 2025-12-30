@@ -10,7 +10,7 @@ const useStore = create((set, get) => ({
   setError: (error) => set({ uploadError: error }),
 
   // --- Environment State ---
-  backgroundColor: '#252525',
+  backgroundColor: '#ded7cc',
   setBackgroundColor: (color) => set({ backgroundColor: color }),
 
   // --- Export State ---

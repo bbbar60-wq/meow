@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HexColorPicker } from 'react-colorful';
 import {
   Menu, Image as ImageIcon, Upload, Download, Edit3, ChevronDown,
-  ImagePlus, Palette, Type, Save, Trash2
+  ImagePlus, Palette, Type, Save, Trash2, QrCode
 } from 'lucide-react';
 import useStore from '../store';
 
@@ -26,7 +26,8 @@ export default function Sidebar({
   onDeleteText,
   onSaveTemplate,
   onDeleteTemplate,
-  canManageTemplate
+  canManageTemplate,
+  onOpenQrGenerator
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(null);
@@ -59,6 +60,10 @@ export default function Sidebar({
     if (!canManageTemplate) return;
     setIsOpen(false);
     onOpenTextModal();
+  };
+  const handleOpenQrClick = () => {
+    setIsOpen(false);
+    onOpenQrGenerator();
   };
 
   // --- OPTIMIZED VARIANTS (Snappy, Premium Feel) ---
@@ -285,6 +290,8 @@ export default function Sidebar({
               )}
             </AnimatePresence>
           </div>
+
+          <SidebarButton icon={<QrCode size={16} />} label="QR generator" onClick={handleOpenQrClick} />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
