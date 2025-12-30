@@ -25,6 +25,11 @@ const useStore = create((set, get) => ({
   // --- Interaction / Tools State ---
   interactionMode: 'view', // 'view' | 'color'
   setInteractionMode: (mode) => set({ interactionMode: mode }),
+
+  // --- Theme ---
+  theme: 'dark', // 'dark' | 'light'
+  setTheme: (theme) => set({ theme }),
+  toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
 }));
 
 export default useStore;

@@ -6,7 +6,7 @@ export default function Loader() {
   return (
     <Html center>
       <div style={{
-        color: 'white',
+        color: 'var(--text-primary)',
         fontFamily: '"SF Pro Display", "Inter", sans-serif',
         fontSize: '12px',
         letterSpacing: '2px',

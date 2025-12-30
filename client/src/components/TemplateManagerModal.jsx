@@ -43,7 +43,7 @@ export default function TemplateManagerModal({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.55)',
+            background: 'var(--overlay)',
             backdropFilter: 'blur(10px)',
             zIndex: 70,
             display: 'flex',
@@ -59,12 +59,12 @@ export default function TemplateManagerModal({
             style={{
               width: '720px',
               maxWidth: '92vw',
-              background: '#0d0d0d',
-              border: '1px solid #222',
-              borderRadius: '18px',
+              background: 'var(--panel)',
+              border: '1px solid var(--border)',
+              borderRadius: '20px',
               padding: '24px',
-              color: '#eee',
-              boxShadow: '0 40px 120px rgba(0,0,0,0.6)',
+              color: 'var(--text-primary)',
+              boxShadow: 'var(--shadow)',
               display: 'flex',
               flexDirection: 'column',
               gap: '18px'
@@ -72,16 +72,16 @@ export default function TemplateManagerModal({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: '11px', letterSpacing: '2px', color: '#666' }}>TEMPLATE LIBRARY</div>
+                <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-muted)' }}>TEMPLATE LIBRARY</div>
                 <div style={{ fontSize: '16px', fontWeight: 600, marginTop: '6px' }}>Pick a saved template</div>
               </div>
               <button
                 onClick={onClose}
                 style={{
                   background: 'transparent',
-                  border: '1px solid #222',
-                  color: '#777',
-                  borderRadius: '10px',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-muted)',
+                  borderRadius: '12px',
                   padding: '6px 12px',
                   cursor: 'pointer'
                 }}
@@ -95,10 +95,10 @@ export default function TemplateManagerModal({
                 <div
                   style={{
                     padding: '20px',
-                    borderRadius: '12px',
-                    border: '1px dashed #333',
+                    borderRadius: '14px',
+                    border: '1px dashed var(--border)',
                     textAlign: 'center',
-                    color: '#666',
+                    color: 'var(--text-muted)',
                     fontSize: '12px'
                   }}
                 >
@@ -124,9 +124,9 @@ export default function TemplateManagerModal({
                     alignItems: 'center',
                     gap: '16px',
                     padding: '12px',
-                    borderRadius: '12px',
-                    border: '1px solid #1f1f1f',
-                    background: hoveredId === template.id ? '#141414' : '#0f0f0f',
+                    borderRadius: '14px',
+                    border: '1px solid var(--border)',
+                    background: hoveredId === template.id ? 'var(--panel-2)' : 'var(--panel)',
                     transition: 'background 0.2s',
                     cursor: 'pointer'
                   }}
@@ -135,14 +135,14 @@ export default function TemplateManagerModal({
                     style={{
                       width: '72px',
                       height: '56px',
-                      borderRadius: '10px',
-                      background: '#1b1b1b',
-                      border: '1px solid #222',
+                      borderRadius: '12px',
+                      background: 'var(--panel-3)',
+                      border: '1px solid var(--border)',
                       overflow: 'hidden',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#555',
+                      color: 'var(--text-muted)',
                       fontSize: '10px'
                     }}
                   >
@@ -153,10 +153,10 @@ export default function TemplateManagerModal({
                     )}
                   </div>
                   <div>
-                    <div style={{ fontSize: '13px', color: '#e5e5e5' }}>{template.name}</div>
-                    <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>Last edited {formatDate(template.updatedAt)}</div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{template.name}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Last edited {formatDate(template.updatedAt)}</div>
                   </div>
-                  <div style={{ fontSize: '11px', color: '#777', textAlign: 'right' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'right' }}>
                     {formatDate(template.createdAt)}
                   </div>
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', opacity: hoveredId === template.id ? 1 : 0.9, transition: 'opacity 0.2s' }}>
@@ -166,10 +166,10 @@ export default function TemplateManagerModal({
                         handleSelectTemplate?.(template);
                       }}
                       style={{
-                        border: '1px solid #333',
-                        background: '#111',
-                        color: '#ddd',
-                        borderRadius: '8px',
+                        border: '1px solid var(--border)',
+                        background: 'var(--panel-2)',
+                        color: 'var(--text-primary)',
+                        borderRadius: '10px',
                         padding: '6px 10px',
                         cursor: 'pointer',
                         display: 'flex',
@@ -187,10 +187,10 @@ export default function TemplateManagerModal({
                         handleRequestDelete?.(template.id);
                       }}
                       style={{
-                        border: '1px solid #332222',
-                        background: '#160d0d',
+                        border: '1px solid color-mix(in srgb, #ff8c8c, transparent 60%)',
+                        background: 'color-mix(in srgb, #ff8c8c, transparent 85%)',
                         color: '#ff8c8c',
-                        borderRadius: '8px',
+                        borderRadius: '10px',
                         padding: '6px 10px',
                         cursor: 'pointer',
                         display: 'flex',
@@ -214,9 +214,9 @@ export default function TemplateManagerModal({
                   onClose();
                 }}
                 style={{
-                  background: '#fff',
-                  color: '#111',
-                  border: '1px solid #fff',
+                  background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
+                  color: '#0c0d14',
+                  border: '1px solid transparent',
                   borderRadius: '999px',
                   padding: '10px 18px',
                   fontSize: '12px',

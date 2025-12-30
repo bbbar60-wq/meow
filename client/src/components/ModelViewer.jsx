@@ -422,16 +422,16 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
            <div style={{ position: 'absolute', left: '20px', top: '20px', pointerEvents: 'auto' }}>
              <div
                style={{
-                 width: '200px', background: '#0f0f0f',
-                 borderRadius: '8px', padding: '12px', border: '1px solid #333',
-                 boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                 width: '200px', background: 'var(--panel)',
+                 borderRadius: '12px', padding: '12px', border: '1px solid var(--border)',
+                 boxShadow: 'var(--shadow)'
                }}
                onPointerDown={(e) => e.stopPropagation()}
                onClick={(e) => e.stopPropagation()}
              >
                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
-                 <span style={{ color: '#888', fontSize: '10px', letterSpacing: '1px', fontWeight: '600' }}>COLOR</span>
-                 <button onClick={handleClosePopup} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: 0 }}>
+                 <span style={{ color: 'var(--text-muted)', fontSize: '10px', letterSpacing: '1px', fontWeight: '600' }}>COLOR</span>
+                 <button onClick={handleClosePopup} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0 }}>
                    <X size={14}/>
                  </button>
                </div>

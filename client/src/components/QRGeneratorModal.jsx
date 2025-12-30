@@ -156,7 +156,7 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.6)',
+        background: 'var(--overlay)',
         backdropFilter: 'blur(10px)',
         zIndex: 80,
         display: 'flex',
@@ -168,51 +168,51 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
         style={{
           width: '920px',
           maxWidth: '96vw',
-          background: '#0d0d0d',
-          borderRadius: '18px',
-          border: '1px solid #222',
+          background: 'var(--panel)',
+          borderRadius: '22px',
+          border: '1px solid var(--border)',
           padding: '24px',
-          color: '#e9e9e9',
+          color: 'var(--text-primary)',
           display: 'grid',
           gridTemplateColumns: '1.1fr 1fr',
           gap: '24px',
-          boxShadow: '0 50px 120px rgba(0,0,0,0.7)'
+          boxShadow: 'var(--shadow)'
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '11px', letterSpacing: '2px', color: '#666' }}>QR GENERATOR</div>
+              <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-muted)' }}>QR GENERATOR</div>
               <div style={{ fontSize: '18px', fontWeight: 600, marginTop: '6px' }}>Create a clean QR</div>
             </div>
             <button
               onClick={onClose}
-              style={{ background: 'transparent', border: '1px solid #333', borderRadius: '8px', color: '#777', padding: '6px', cursor: 'pointer' }}
+              style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-muted)', padding: '6px', cursor: 'pointer' }}
             >
               <X size={16} />
             </button>
           </div>
 
-          <section style={{ border: '1px solid #1b1b1b', borderRadius: '12px', padding: '16px', background: '#111' }}>
-            <div style={{ fontSize: '12px', letterSpacing: '1px', color: '#888', marginBottom: '10px' }}>CONTENT</div>
+          <section style={{ border: '1px solid var(--border)', borderRadius: '14px', padding: '16px', background: 'var(--panel-2)' }}>
+            <div style={{ fontSize: '12px', letterSpacing: '1px', color: 'var(--text-muted)', marginBottom: '10px' }}>CONTENT</div>
             <input
               value={content}
               onChange={(event) => setContent(event.target.value)}
               placeholder="Paste a URL or text"
               style={{
                 width: '100%',
-                background: '#0b0b0b',
-                border: '1px solid #222',
-                borderRadius: '10px',
+                background: 'var(--panel-3)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
                 padding: '10px 12px',
-                color: '#eee',
+                color: 'var(--text-primary)',
                 fontSize: '12px'
               }}
             />
           </section>
 
-          <section style={{ border: '1px solid #1b1b1b', borderRadius: '12px', padding: '16px', background: '#111' }}>
-            <div style={{ fontSize: '12px', letterSpacing: '1px', color: '#888', marginBottom: '12px' }}>CENTER LOGO</div>
+          <section style={{ border: '1px solid var(--border)', borderRadius: '14px', padding: '16px', background: 'var(--panel-2)' }}>
+            <div style={{ fontSize: '12px', letterSpacing: '1px', color: 'var(--text-muted)', marginBottom: '12px' }}>CENTER LOGO</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <button
                 type="button"
@@ -222,10 +222,10 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
                   alignItems: 'center',
                   gap: '8px',
                   padding: '10px 12px',
-                  background: '#0b0b0b',
-                  border: '1px solid #222',
-                  borderRadius: '10px',
-                  color: '#ddd',
+                  background: 'var(--panel-3)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  color: 'var(--text-primary)',
                   cursor: 'pointer'
                 }}
               >
@@ -233,12 +233,12 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
                 Upload logo
               </button>
               {logoImage ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#8f8f8f', fontSize: '11px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-muted)', fontSize: '11px' }}>
                   <ImageIcon size={14} />
                   Logo ready
                 </div>
               ) : (
-                <div style={{ color: '#666', fontSize: '11px' }}>PNG / JPG / GIF</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>PNG / JPG / GIF</div>
               )}
             </div>
             <input
@@ -267,9 +267,9 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
               style={{
                 flex: 1,
                 background: 'transparent',
-                border: '1px solid #333',
-                color: '#aaa',
-                borderRadius: '10px',
+                border: '1px solid var(--border)',
+                color: 'var(--text-secondary)',
+                borderRadius: '12px',
                 padding: '12px 18px',
                 cursor: 'pointer'
               }}
@@ -280,10 +280,10 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
               onClick={handleCreate}
               style={{
                 flex: 1,
-                background: '#fff',
-                border: '1px solid #fff',
-                color: '#111',
-                borderRadius: '10px',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
+                border: '1px solid transparent',
+                color: '#0c0d14',
+                borderRadius: '12px',
                 padding: '12px 18px',
                 cursor: 'pointer',
                 fontWeight: 600
@@ -298,9 +298,9 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
           <div
             ref={previewRef}
             style={{
-              background: '#0a0a0a',
+              background: 'var(--panel-2)',
               borderRadius: '18px',
-              border: '1px solid #222',
+              border: '1px solid var(--border)',
               padding: '20px',
               minHeight: '420px',
               display: 'flex',
@@ -311,10 +311,10 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
             {previewUrl ? (
               <img src={previewUrl} alt="QR preview" style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '12px' }} />
             ) : (
-              <div style={{ color: '#666', fontSize: '12px' }}>{isGenerating ? 'Generating...' : 'Preview unavailable'}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{isGenerating ? 'Generating...' : 'Preview unavailable'}</div>
             )}
           </div>
-          <div style={{ color: '#666', fontSize: '11px', textAlign: 'center' }}>
+          <div style={{ color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center' }}>
             High-error correction QR with live logo rendering.
           </div>
         </div>
@@ -326,7 +326,7 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
 function ControlRow({ label, children }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-      <label style={{ fontSize: '11px', letterSpacing: '1px', color: '#666' }}>{label}</label>
+      <label style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--text-muted)' }}>{label}</label>
       <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>{children}</div>
     </div>
   );

@@ -12,7 +12,7 @@ export default function ConfirmDialog({ isOpen, title, description, confirmLabel
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.6)',
+            background: 'var(--overlay)',
             backdropFilter: 'blur(8px)',
             zIndex: 90,
             display: 'flex',
@@ -28,25 +28,25 @@ export default function ConfirmDialog({ isOpen, title, description, confirmLabel
             style={{
               width: '380px',
               maxWidth: '90vw',
-              background: '#111',
-              borderRadius: '14px',
-              border: '1px solid #222',
+              background: 'var(--panel)',
+              borderRadius: '18px',
+              border: '1px solid var(--border)',
               padding: '20px',
-              color: '#eee',
-              boxShadow: '0 30px 90px rgba(0,0,0,0.6)'
+              color: 'var(--text-primary)',
+              boxShadow: 'var(--shadow)'
             }}
           >
             <div style={{ fontSize: '13px', letterSpacing: '1px', marginBottom: '8px' }}>{title}</div>
-            <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5 }}>{description}</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>{description}</div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
               <button
                 onClick={onCancel}
                 style={{
                   background: 'transparent',
-                  border: '1px solid #333',
-                  color: '#aaa',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-secondary)',
                   padding: '8px 16px',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
                   cursor: 'pointer'
                 }}
               >
@@ -55,11 +55,11 @@ export default function ConfirmDialog({ isOpen, title, description, confirmLabel
               <button
                 onClick={onConfirm}
                 style={{
-                  background: '#ff5c5c',
-                  border: '1px solid #ff5c5c',
-                  color: '#111',
+                  background: 'linear-gradient(135deg, #ff6b6b, #ffb86b)',
+                  border: '1px solid transparent',
+                  color: '#0c0d14',
                   padding: '8px 16px',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
                   cursor: 'pointer',
                   fontWeight: 600
                 }}

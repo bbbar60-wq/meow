@@ -18,19 +18,19 @@ export default function AssetEditorPanel({ image, onClose, onChange, title, show
         right: '80px',
         zIndex: 60,
         width: '280px',
-        background: '#0f0f0f',
-        border: '1px solid #222',
-        borderRadius: '10px',
+        background: 'var(--panel)',
+        border: '1px solid var(--border)',
+        borderRadius: '14px',
         padding: '14px',
-        color: '#bbb',
+        color: 'var(--text-secondary)',
         fontFamily: '"Inter", sans-serif',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
+        boxShadow: 'var(--shadow)'
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
         <div>
-          <div style={{ fontSize: '10px', letterSpacing: '2px', color: '#555' }}>{title}</div>
-          <div style={{ fontSize: '12px', color: '#eee', marginTop: '4px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '2px', color: 'var(--text-muted)' }}>{title}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-primary)', marginTop: '4px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {image.name}
           </div>
         </div>
@@ -38,9 +38,9 @@ export default function AssetEditorPanel({ image, onClose, onChange, title, show
           onClick={onClose}
           style={{
             background: 'transparent',
-            border: '1px solid #222',
-            color: '#777',
-            borderRadius: '6px',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
+            borderRadius: '8px',
             padding: '4px 8px',
             cursor: 'pointer'
           }}

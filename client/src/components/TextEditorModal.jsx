@@ -60,7 +60,7 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
       style={{
         position: 'absolute',
         inset: 0,
-        background: 'rgba(0,0,0,0.55)',
+        background: 'var(--overlay)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -68,30 +68,46 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
       }}
     >
       <div
+        className="text-editor-panel"
         style={{
           width: '880px',
           maxWidth: '90vw',
-          background: '#0f0f0f',
-          border: '1px solid #222',
-          borderRadius: '14px',
+          background: 'var(--panel)',
+          border: '1px solid var(--border)',
+          borderRadius: '20px',
           padding: '20px',
-          boxShadow: '0 40px 120px rgba(0,0,0,0.6)',
-          color: '#eaeaea',
+          boxShadow: 'var(--shadow)',
+          color: 'var(--text-primary)',
           display: 'flex',
           flexDirection: 'column',
           gap: '20px'
         }}
       >
+        <style>{`
+          .text-editor-panel select,
+          .text-editor-panel input[type="color"],
+          .text-editor-panel input[type="text"],
+          .text-editor-panel input[type="number"] {
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 6px 8px;
+          }
+          .text-editor-panel input[type="checkbox"] {
+            accent-color: var(--accent);
+          }
+        `}</style>
         <div style={{ display: 'flex', gap: '20px' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '11px', letterSpacing: '2px', color: '#666', marginBottom: '12px' }}>TEXT BOX</div>
+            <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '12px' }}>TEXT BOX</div>
             <div
               style={{
-                border: '1px solid #222',
-                borderRadius: '10px',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
                 padding: form.padding,
                 minHeight: '220px',
-                background: form.backgroundColor,
+                background: form.backgroundColor === 'transparent' ? 'var(--panel-2)' : form.backgroundColor,
                 position: 'relative',
                 overflow: 'hidden'
               }}
@@ -129,7 +145,7 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
           <div
             style={{
               width: '240px',
-              borderLeft: '1px solid #1f1f1f',
+              borderLeft: '1px solid var(--border)',
               paddingLeft: '20px',
               display: 'flex',
               flexDirection: 'column',
@@ -147,27 +163,27 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
             <ControlRow label="Paragraph Spacing" value={form.paragraphSpacing} min={0} max={60} step={1} onChange={(value) => updateForm('paragraphSpacing', value)} allowNegative={false} />
 
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Text Color</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Text Color</label>
               <input type="color" value={form.color} onChange={(event) => updateForm('color', event.target.value)} />
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Background Color</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Background Color</label>
               <input type="color" value={form.backgroundColor} onChange={(event) => updateForm('backgroundColor', event.target.value)} />
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Text Background</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Text Background</label>
               <input type="color" value={form.textBackgroundColor} onChange={(event) => updateForm('textBackgroundColor', event.target.value)} />
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Highlight Color</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Highlight Color</label>
               <input type="color" value={form.highlightColor} onChange={(event) => updateForm('highlightColor', event.target.value)} />
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#888' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
                 <input type="checkbox" checked={form.enableHighlight} onChange={(event) => updateForm('enableHighlight', event.target.checked)} />
                 Enable Highlighting
               </label>
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Font Family</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Font Family</label>
               <select value={form.fontFamily} onChange={(event) => updateForm('fontFamily', event.target.value)}>
                 <option value="Inter">Inter</option>
                 <option value="Arial">Arial</option>
@@ -178,23 +194,23 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
               </select>
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Font Weight</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Font Weight</label>
               <select value={form.fontWeight} onChange={(event) => updateForm('fontWeight', Number(event.target.value))}>
                 {[300, 400, 500, 600, 700, 800].map((weight) => (
                   <option key={weight} value={weight}>{weight}</option>
                 ))}
               </select>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#888' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
               <input type="checkbox" checked={form.isBold} onChange={(event) => updateForm('isBold', event.target.checked)} />
               Bold
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#888' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
               <input type="checkbox" checked={form.isItalic} onChange={(event) => updateForm('isItalic', event.target.checked)} />
               Italic
             </label>
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Alignment</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Alignment</label>
               <select value={form.alignment} onChange={(event) => updateForm('alignment', event.target.value)}>
                 <option value="left">Left</option>
                 <option value="center">Center</option>
@@ -203,7 +219,7 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
               </select>
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Text Decoration</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Text Decoration</label>
               <select value={form.textDecoration} onChange={(event) => updateForm('textDecoration', event.target.value)}>
                 <option value="none">None</option>
                 <option value="underline">Underline</option>
@@ -212,7 +228,7 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
               </select>
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Text Transform</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Text Transform</label>
               <select value={form.textTransform} onChange={(event) => updateForm('textTransform', event.target.value)}>
                 <option value="none">None</option>
                 <option value="uppercase">Uppercase</option>
@@ -221,7 +237,7 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
               </select>
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Letter Case Control</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Letter Case Control</label>
               <select value={form.caseControl} onChange={(event) => updateForm('caseControl', event.target.value)}>
                 <option value="none">None</option>
                 <option value="uppercase">Uppercase</option>
@@ -229,7 +245,7 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
               </select>
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Text Overflow</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Text Overflow</label>
               <select value={form.textOverflow} onChange={(event) => updateForm('textOverflow', event.target.value)}>
                 <option value="wrap">Wrap</option>
                 <option value="ellipsis">Ellipsis</option>
@@ -237,19 +253,19 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
               </select>
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Vertical Align</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Vertical Align</label>
               <select value={form.verticalAlign} onChange={(event) => updateForm('verticalAlign', event.target.value)}>
                 <option value="top">Top</option>
                 <option value="center">Center</option>
                 <option value="bottom">Bottom</option>
               </select>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#888' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
               <input type="checkbox" checked={form.allowResize} onChange={(event) => updateForm('allowResize', event.target.checked)} />
               Resize Option
             </label>
             <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: '#888' }}>Text Shadow</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Text Shadow</label>
               <input type="color" value={form.textShadowColor} onChange={(event) => updateForm('textShadowColor', event.target.value)} />
               <ControlRow label="Shadow Blur" value={form.textShadowBlur} min={0} max={40} step={1} onChange={(value) => updateForm('textShadowBlur', value)} allowNegative={false} />
               <ControlRow label="Shadow X" value={form.textShadowOffsetX} min={-20} max={20} step={1} onChange={(value) => updateForm('textShadowOffsetX', value)} />
@@ -263,10 +279,10 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
             onClick={onCancel}
             style={{
               background: 'transparent',
-              border: '1px solid #333',
-              color: '#999',
+              border: '1px solid var(--border)',
+              color: 'var(--text-secondary)',
               padding: '10px 24px',
-              borderRadius: '8px',
+              borderRadius: '10px',
               cursor: 'pointer'
             }}
           >
@@ -275,11 +291,11 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
           <button
             onClick={handleSubmit}
             style={{
-              background: '#fff',
-              border: '1px solid #fff',
-              color: '#000',
+              background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
+              border: '1px solid transparent',
+              color: '#0c0d14',
               padding: '10px 24px',
-              borderRadius: '8px',
+              borderRadius: '10px',
               cursor: 'pointer'
             }}
           >

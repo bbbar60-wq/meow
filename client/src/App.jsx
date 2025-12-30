@@ -28,7 +28,8 @@ function App() {
     backgroundColor,
     interactionMode,
     setInteractionMode,
-    setBackgroundColor
+    setBackgroundColor,
+    theme
   } = useStore();
   const imageInputRef = useRef(null);
   const templateInputRef = useRef(null);
@@ -49,6 +50,51 @@ function App() {
   const saveTimeoutRef = useRef(null);
   const templateDataRef = useRef({});
   const api = useMemo(() => axios.create({ baseURL: 'http://localhost:5000' }), []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const themes = {
+      dark: {
+        '--app-bg': 'radial-gradient(circle at top, rgba(143, 139, 255, 0.18), transparent 45%), #0b0c12',
+        '--panel': '#11131a',
+        '--panel-2': '#171a24',
+        '--panel-3': '#1d2030',
+        '--border': '#272b3d',
+        '--text-primary': '#f5f4f8',
+        '--text-secondary': '#b6b7c4',
+        '--text-muted': '#8a8ca0',
+        '--accent': '#8f8bff',
+        '--accent-2': '#3dd6c6',
+        '--accent-3': '#f6c177',
+        '--shadow': '0 40px 120px rgba(5, 7, 15, 0.65)',
+        '--overlay': 'rgba(10, 12, 20, 0.65)'
+      },
+      light: {
+        '--app-bg': 'radial-gradient(circle at top, rgba(111, 109, 255, 0.18), transparent 45%), #f6f4f1',
+        '--panel': '#ffffff',
+        '--panel-2': '#f4f1f8',
+        '--panel-3': '#ece7f1',
+        '--border': '#ded9e5',
+        '--text-primary': '#1b1b24',
+        '--text-secondary': '#4c4e63',
+        '--text-muted': '#7a7c90',
+        '--accent': '#6f6dff',
+        '--accent-2': '#00a1b2',
+        '--accent-3': '#ffb347',
+        '--shadow': '0 40px 120px rgba(30, 27, 45, 0.18)',
+        '--overlay': 'rgba(230, 229, 240, 0.6)'
+      }
+    };
+
+    const palette = themes[theme] ?? themes.dark;
+    Object.entries(palette).forEach(([key, value]) => {
+      root.style.setProperty(key, value);
+    });
+    root.style.colorScheme = theme;
+    document.body.style.background = 'var(--app-bg)';
+    document.body.style.color = 'var(--text-primary)';
+    document.body.style.transition = 'background 0.4s ease, color 0.4s ease';
+  }, [theme]);
 
   useEffect(() => {
     const loadTemplates = async () => {
@@ -99,6 +145,20 @@ function App() {
     if (imageInputRef.current) {
       imageInputRef.current.click();
     }
+  };
+
+  const handleImportIcon = (icon) => {
+    const newImage = {
+      id: `${Date.now()}-${icon.label}`,
+      name: `${icon.label}.png`,
+      url: icon.url,
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: -90, y: 0, z: 0 },
+      scale: 1,
+      cornerRadius: 0
+    };
+    setImages((prev) => [...prev, newImage]);
+    setActiveImageId(null);
   };
 
   const handleImageFileChange = async (event) => {
@@ -360,10 +420,16 @@ function App() {
   }, []);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', background: '#000' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', background: 'var(--app-bg)' }}>
+      <style>{`
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Inter", sans-serif; }
+        button, input, select, textarea { font-family: "Inter", sans-serif; }
+      `}</style>
       <Sidebar
         onOpenTemplateManager={() => setIsTemplateModalOpen(true)}
         onUploadImage={handleRequestImageUpload}
+        onImportIcon={handleImportIcon}
         onOpenQrGenerator={() => setIsQrModalOpen(true)}
         images={images}
         onSelectImage={handleSelectImage}
@@ -494,9 +560,9 @@ function App() {
           gap: '8px',
           padding: '8px 12px',
           borderRadius: '999px',
-          background: 'rgba(0,0,0,0.5)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          color: '#cfcfcf',
+          background: 'color-mix(in srgb, var(--panel), transparent 25%)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-secondary)',
           fontSize: '11px',
           letterSpacing: '1px'
         }}
@@ -511,7 +577,7 @@ function App() {
               transition={{ duration: 0.3 }}
               style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
-              <CheckCircle2 size={16} color="#7dff9b" />
+              <CheckCircle2 size={16} color="var(--accent-2)" />
               <span>Saved</span>
             </motion.div>
           ) : (
@@ -523,7 +589,7 @@ function App() {
               transition={{ duration: 0.3 }}
               style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
-              <Cloud size={16} color="#cfcfcf" />
+              <Cloud size={16} color="var(--text-secondary)" />
               <span>Auto-save</span>
             </motion.div>
           )}
