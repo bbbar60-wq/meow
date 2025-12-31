@@ -45,7 +45,7 @@ export default function TemplateManagerModal({
             inset: 0,
             background: 'var(--overlay)',
             backdropFilter: 'blur(10px)',
-            zIndex: 70,
+            zIndex: 140,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'

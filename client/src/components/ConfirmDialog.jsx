@@ -14,7 +14,7 @@ export default function ConfirmDialog({ isOpen, title, description, confirmLabel
             inset: 0,
             background: 'var(--overlay)',
             backdropFilter: 'blur(8px)',
-            zIndex: 90,
+            zIndex: 160,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'

@@ -249,41 +249,42 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
 
           // 2. Material Realism
           if (child.material) {
-             // Clone to allow individual editing
-             if (!child.userData.isOptimized) {
-               child.material = child.material.clone();
+            // Clone to allow individual editing
+            if (!child.userData.isOptimized) {
+              const baseColor = child.material.color ? child.material.color.clone() : new THREE.Color('#ffffff');
+              const hsl = { h: 0, s: 0, l: 0 };
+              baseColor.getHSL(hsl);
+              const isGlossy = hsl.s > 0.25 && hsl.l < 0.65;
 
-               // REALISM: Softer reflections for a studio matte finish
-               child.material.envMapIntensity = 0.65;
+              child.material = new THREE.MeshPhysicalMaterial({
+                color: baseColor,
+                metalness: isGlossy ? 0.08 : 0.02,
+                roughness: isGlossy ? 0.16 : 0.48,
+                clearcoat: isGlossy ? 0.65 : 0.18,
+                clearcoatRoughness: isGlossy ? 0.08 : 0.45,
+                ior: 1.45,
+                reflectivity: isGlossy ? 0.45 : 0.2,
+                specularIntensity: isGlossy ? 1.1 : 0.6,
+                specularColor: new THREE.Color('#ffffff'),
+                envMapIntensity: isGlossy ? 1.2 : 0.75,
+                side: THREE.DoubleSide
+              });
 
-               // REALISM: Push surfaces toward a gentle matte look
-               child.material.roughness = Math.max(0.45, child.material.roughness ?? 0.65);
+              // Remove texture maps for a clean, premium material look
+              child.material.map = null;
+              child.material.normalMap = null;
+              child.material.roughnessMap = null;
+              child.material.metalnessMap = null;
+              child.material.aoMap = null;
 
-               if (child.material.isMeshStandardMaterial) {
-                 child.material.metalness = Math.min(0.08, child.material.metalness ?? 0.03);
-                 child.material.clearcoat = 0.04;
-                 child.material.clearcoatRoughness = 0.65;
-                 child.material.flatShading = false;
-               }
+              // 3. Texture Anisotropy (Crisp textures at angles)
+              if (child.material.map) child.material.map.anisotropy = gl.capabilities.getMaxAnisotropy();
+              if (child.material.normalMap) child.material.normalMap.anisotropy = gl.capabilities.getMaxAnisotropy();
+              if (child.material.roughnessMap) child.material.roughnessMap.anisotropy = gl.capabilities.getMaxAnisotropy();
+              if (child.material.metalnessMap) child.material.metalnessMap.anisotropy = gl.capabilities.getMaxAnisotropy();
 
-               // Remove texture maps for a clean, premium material look
-               child.material.map = null;
-               child.material.normalMap = null;
-               child.material.roughnessMap = null;
-               child.material.metalnessMap = null;
-               child.material.aoMap = null;
-
-               // Fix z-fighting or rendering order issues
-               child.material.side = THREE.DoubleSide;
-
-               // 3. Texture Anisotropy (Crisp textures at angles)
-               if (child.material.map) child.material.map.anisotropy = gl.capabilities.getMaxAnisotropy();
-               if (child.material.normalMap) child.material.normalMap.anisotropy = gl.capabilities.getMaxAnisotropy();
-               if (child.material.roughnessMap) child.material.roughnessMap.anisotropy = gl.capabilities.getMaxAnisotropy();
-               if (child.material.metalnessMap) child.material.metalnessMap.anisotropy = gl.capabilities.getMaxAnisotropy();
-
-               child.material.needsUpdate = true;
-               child.userData.isOptimized = true;
+              child.material.needsUpdate = true;
+              child.userData.isOptimized = true;
             }
           }
         }
@@ -418,7 +419,7 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
       })}
 
       {selectedMesh && interactionMode === 'color' && (
-        <Html position={[0,0,0]} style={{ pointerEvents: 'none', zIndex: 10 }}>
+        <Html position={[0,0,0]} style={{ pointerEvents: 'none', zIndex: 140 }}>
            <div style={{ position: 'absolute', left: '20px', top: '20px', pointerEvents: 'auto' }}>
              <div
                style={{

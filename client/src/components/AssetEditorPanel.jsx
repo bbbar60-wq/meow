@@ -2,21 +2,26 @@ import React from 'react';
 import ControlRow from './ControlRow';
 
 export default function AssetEditorPanel({ image, onClose, onChange, title, showCornerRadius = false, scaleLabel }) {
+  const position = image.position ?? { x: 0, y: 0, z: 0 };
+  const rotation = image.rotation ?? { x: 0, y: 0, z: 0 };
+  const scale = Number.isFinite(image.scale) ? image.scale : 1;
+  const cornerRadius = Number.isFinite(image.cornerRadius) ? image.cornerRadius : 0;
+
   const handlePositionChange = (axis, value) => {
-    onChange({ position: { ...image.position, [axis]: value } });
+    onChange({ position: { ...position, [axis]: value } });
   };
 
   const handleRotationChange = (axis, value) => {
-    onChange({ rotation: { ...image.rotation, [axis]: value } });
+    onChange({ rotation: { ...rotation, [axis]: value } });
   };
 
   return (
     <div
       style={{
-        position: 'absolute',
+        position: 'fixed',
         top: '120px',
         right: '80px',
-        zIndex: 60,
+        zIndex: 120,
         width: '280px',
         background: 'var(--panel)',
         border: '1px solid var(--border)',
@@ -51,7 +56,7 @@ export default function AssetEditorPanel({ image, onClose, onChange, title, show
 
       <ControlRow
         label="X coordinates"
-        value={image.position.x}
+        value={position.x}
         min={-10}
         max={10}
         step={0.001}
@@ -59,7 +64,7 @@ export default function AssetEditorPanel({ image, onClose, onChange, title, show
       />
       <ControlRow
         label="Y coordinates"
-        value={image.position.y}
+        value={position.y}
         min={-10}
         max={10}
         step={0.001}
@@ -67,7 +72,7 @@ export default function AssetEditorPanel({ image, onClose, onChange, title, show
       />
       <ControlRow
         label="Z coordinates"
-        value={image.position.z}
+        value={position.z}
         min={-10}
         max={10}
         step={0.001}
@@ -75,7 +80,7 @@ export default function AssetEditorPanel({ image, onClose, onChange, title, show
       />
       <ControlRow
         label="X rotation"
-        value={image.rotation.x}
+        value={rotation.x}
         min={-180}
         max={180}
         step={0.001}
@@ -83,7 +88,7 @@ export default function AssetEditorPanel({ image, onClose, onChange, title, show
       />
       <ControlRow
         label="Y rotation"
-        value={image.rotation.y}
+        value={rotation.y}
         min={-180}
         max={180}
         step={0.001}
@@ -91,7 +96,7 @@ export default function AssetEditorPanel({ image, onClose, onChange, title, show
       />
       <ControlRow
         label="Z rotation"
-        value={image.rotation.z}
+        value={rotation.z}
         min={-180}
         max={180}
         step={0.001}
@@ -99,7 +104,7 @@ export default function AssetEditorPanel({ image, onClose, onChange, title, show
       />
       <ControlRow
         label={scaleLabel}
-        value={image.scale}
+        value={scale}
         min={-10}
         max={10}
         step={0.001}
@@ -108,7 +113,7 @@ export default function AssetEditorPanel({ image, onClose, onChange, title, show
       {showCornerRadius && (
         <ControlRow
           label="Corner radius"
-          value={image.cornerRadius}
+          value={cornerRadius}
           min={0}
           max={50}
           step={1}

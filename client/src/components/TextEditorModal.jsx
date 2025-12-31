@@ -37,10 +37,10 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
     []
   );
 
-  const [form, setForm] = useState(initialText || defaultState);
+  const [form, setForm] = useState({ ...defaultState, ...(initialText || {}) });
 
   useEffect(() => {
-    setForm(initialText || defaultState);
+    setForm({ ...defaultState, ...(initialText || {}) });
   }, [initialText, defaultState]);
 
   const updateForm = (key, value) => {
@@ -58,13 +58,13 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
   return (
     <div
       style={{
-        position: 'absolute',
+        position: 'fixed',
         inset: 0,
         background: 'var(--overlay)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 80
+        zIndex: 140
       }}
     >
       <div

@@ -481,14 +481,14 @@ function App() {
         <color attach="background" args={[backgroundColor]} />
 
         <Environment resolution={512} background={false}>
-          <Lightformer intensity={2.8} position={[4.5, 5.5, 3.5]} rotation-y={Math.PI / 2} scale={[5.5, 5.5, 1]} />
-          <Lightformer intensity={1.4} position={[-6, 2.8, 1]} rotation-y={-Math.PI / 2} scale={[4, 4, 1]} />
-          <Lightformer intensity={1.1} position={[0, 6.5, -3]} rotation-x={Math.PI / 2} scale={[7, 7, 1]} />
+          <Lightformer intensity={3.4} position={[4.8, 5.2, 3.2]} rotation-y={Math.PI / 2} scale={[6.5, 6.5, 1]} />
+          <Lightformer intensity={1.6} position={[-6.2, 2.4, 1.2]} rotation-y={-Math.PI / 2} scale={[4.4, 4.4, 1]} />
+          <Lightformer intensity={1.2} position={[0, 6.8, -3]} rotation-x={Math.PI / 2} scale={[8, 8, 1]} />
         </Environment>
 
         <directionalLight
-          position={[5.5, 7, 4.5]}
-          intensity={1.85}
+          position={[5.8, 7.2, 4.2]}
+          intensity={2.1}
           color="#fff3e2"
           castShadow
           shadow-mapSize-width={2048}
@@ -500,8 +500,9 @@ function App() {
           shadow-camera-top={6.5}
           shadow-camera-bottom={-6.5}
         />
-        <directionalLight position={[-4.5, 3, -2.5]} intensity={0.35} color="#e9e2d8" />
-        <hemisphereLight intensity={0.4} color="#f6efe5" groundColor="#bfb7ad" />
+        <directionalLight position={[-4.8, 3.2, -2.4]} intensity={0.45} color="#e9e2d8" />
+        <ambientLight intensity={0.18} color="#f6efe5" />
+        <hemisphereLight intensity={0.35} color="#f6efe5" groundColor="#bfb7ad" />
 
         <Suspense fallback={<Loader />}>
           {modelUrl ? (
@@ -513,7 +514,7 @@ function App() {
                 materialOverrides={materialOverrides}
                 onMaterialColorChange={handleMaterialColorChange}
               />
-              <ContactShadows resolution={1024} scale={20} blur={2.4} opacity={0.48} far={12} color="#3b3631" frames={1} />
+              <ContactShadows resolution={1024} scale={20} blur={3.2} opacity={0.55} far={10} color="#3b3631" frames={1} />
             </group>
           ) : null}
         </Suspense>
@@ -532,7 +533,7 @@ function App() {
         </GizmoHelper>
 
         <EffectComposer disableNormalPass multisampling={0}>
-          <SSAO intensity={12} radius={0.2} luminanceInfluence={0.55} color="#2a2520" />
+          <SSAO intensity={13} radius={0.22} luminanceInfluence={0.6} color="#2a2520" />
           <ToneMapping />
           <Vignette eskil={false} offset={0.12} darkness={0.2} />
         </EffectComposer>

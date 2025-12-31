@@ -213,7 +213,8 @@ export default function Sidebar({
             cursor: 'pointer',
             display: 'grid',
             placeItems: 'center',
-            boxShadow: 'none'
+            boxShadow: 'none',
+            outline: 'none'
           }}
           aria-label="Toggle theme"
         >
@@ -525,11 +526,11 @@ function LoadingSpinner() {
 
 function SidebarButton({ icon, label, onClick, primary = false, disabled = false, isActive = false, hasArrow = false, small = false, onArrowClick }) {
   return (
-    <motion.button
-      whileHover={!disabled ? { x: 4, backgroundColor: primary ? 'var(--accent)' : 'var(--panel-2)' } : {}}
-      whileTap={!disabled ? { scale: 0.98 } : {}}
-      onClick={onClick} disabled={disabled}
-      style={{
+      <motion.button
+        whileHover={!disabled ? { x: 4, backgroundColor: primary ? 'var(--accent)' : 'var(--panel-2)' } : {}}
+        whileTap={!disabled ? { scale: 0.98 } : {}}
+        onClick={onClick} disabled={disabled}
+        style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
         padding: small ? '10px 12px' : '14px 16px',
         background: isActive ? 'var(--panel-2)' : (primary ? 'linear-gradient(135deg, var(--accent), var(--accent-2))' : 'transparent'),
@@ -540,7 +541,8 @@ function SidebarButton({ icon, label, onClick, primary = false, disabled = false
         fontFamily: '"Inter", sans-serif',
         fontWeight: primary ? '600' : '500',
         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1, transition: 'all 0.15s ease',
-        textAlign: 'left', letterSpacing: '0.4px'
+        textAlign: 'left', letterSpacing: '0.4px',
+        outline: 'none'
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>{icon}<span>{label}</span></div>
@@ -557,7 +559,9 @@ function SidebarButton({ icon, label, onClick, primary = false, disabled = false
             padding: 0,
             cursor: 'pointer',
             display: 'flex',
-            alignItems: 'center'
+            alignItems: 'center',
+            boxShadow: 'none',
+            outline: 'none'
           }}
         >
           <motion.div animate={{ rotate: isActive ? 180 : 0 }}>

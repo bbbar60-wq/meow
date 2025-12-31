@@ -158,7 +158,7 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
         inset: 0,
         background: 'var(--overlay)',
         backdropFilter: 'blur(10px)',
-        zIndex: 80,
+        zIndex: 140,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
