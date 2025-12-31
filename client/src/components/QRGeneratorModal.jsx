@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Image as ImageIcon, Upload, X } from 'lucide-react';
+import { Image as ImageIcon, Upload } from 'lucide-react';
 
 const DEFAULT_STATE = {
   content: 'https://your-link.com',
@@ -179,19 +179,7 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
           boxShadow: 'var(--shadow)'
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-muted)' }}>QR GENERATOR</div>
-              <div style={{ fontSize: '18px', fontWeight: 600, marginTop: '6px' }}>Create a clean QR</div>
-            </div>
-            <button
-              onClick={onClose}
-              style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-muted)', padding: '6px', cursor: 'pointer' }}
-            >
-              <X size={16} />
-            </button>
-          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
           <section style={{ border: '1px solid var(--border)', borderRadius: '14px', padding: '16px', background: 'var(--panel-2)' }}>
             <div style={{ fontSize: '12px', letterSpacing: '1px', color: 'var(--text-muted)', marginBottom: '10px' }}>CONTENT</div>
@@ -261,11 +249,11 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
             </div>
           </section>
 
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
             <button
               onClick={onClose}
               style={{
-                flex: 1,
+                minWidth: '160px',
                 background: 'transparent',
                 border: '1px solid var(--border)',
                 color: 'var(--text-secondary)',
@@ -279,7 +267,7 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
             <button
               onClick={handleCreate}
               style={{
-                flex: 1,
+                minWidth: '160px',
                 background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
                 border: '1px solid transparent',
                 color: '#0c0d14',
@@ -313,9 +301,6 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
             ) : (
               <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{isGenerating ? 'Generating...' : 'Preview unavailable'}</div>
             )}
-          </div>
-          <div style={{ color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center' }}>
-            High-error correction QR with live logo rendering.
           </div>
         </div>
       </div>

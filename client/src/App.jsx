@@ -1,6 +1,6 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows, GizmoHelper, GizmoViewport, Lightformer } from '@react-three/drei';
+import { OrbitControls, Environment, AccumulativeShadows, RandomizedLight, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette, SSAO, ToneMapping } from '@react-three/postprocessing';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -461,10 +461,10 @@ function App() {
       <Canvas
         shadows
         dpr={[1, 1.5]}
-        camera={{ position: [1.35, 1.3, 4.2], fov: 35 }}
+        camera={{ position: [1.6, 1.35, 5], fov: 40 }}
         gl={{
           preserveDrawingBuffer: true,
-          antialias: true,
+          antialias: false,
           toneMapping: THREE.AgXToneMapping,
           toneMappingExposure: 1.05,
           physicallyCorrectLights: true
@@ -480,29 +480,7 @@ function App() {
       >
         <color attach="background" args={[backgroundColor]} />
 
-        <Environment resolution={512} background={false}>
-          <Lightformer intensity={3.4} position={[4.8, 5.2, 3.2]} rotation-y={Math.PI / 2} scale={[6.5, 6.5, 1]} />
-          <Lightformer intensity={1.6} position={[-6.2, 2.4, 1.2]} rotation-y={-Math.PI / 2} scale={[4.4, 4.4, 1]} />
-          <Lightformer intensity={1.2} position={[0, 6.8, -3]} rotation-x={Math.PI / 2} scale={[8, 8, 1]} />
-        </Environment>
-
-        <directionalLight
-          position={[5.8, 7.2, 4.2]}
-          intensity={2.1}
-          color="#fff3e2"
-          castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-          shadow-camera-near={1}
-          shadow-camera-far={28}
-          shadow-camera-left={-6.5}
-          shadow-camera-right={6.5}
-          shadow-camera-top={6.5}
-          shadow-camera-bottom={-6.5}
-        />
-        <directionalLight position={[-4.8, 3.2, -2.4]} intensity={0.45} color="#e9e2d8" />
-        <ambientLight intensity={0.18} color="#f6efe5" />
-        <hemisphereLight intensity={0.35} color="#f6efe5" groundColor="#bfb7ad" />
+        <Environment files="/environments/studio_small_09_2k.exr" background={false} environmentRotation={[0, Math.PI / 4, 0]} />
 
         <Suspense fallback={<Loader />}>
           {modelUrl ? (
@@ -514,16 +492,27 @@ function App() {
                 materialOverrides={materialOverrides}
                 onMaterialColorChange={handleMaterialColorChange}
               />
-              <ContactShadows resolution={1024} scale={20} blur={3.2} opacity={0.55} far={10} color="#3b3631" frames={1} />
+              <AccumulativeShadows
+                temporal
+                frames={60}
+                opacity={0.65}
+                scale={20}
+                color="#1a1511"
+                alphaTest={0.85}
+              >
+                <RandomizedLight amount={8} radius={6} intensity={1.5} ambient={0.5} position={[5, 5, 5]} bias={0.001} />
+              </AccumulativeShadows>
             </group>
           ) : null}
         </Suspense>
+        <ambientLight intensity={0.7} />
+        <rectAreaLight width={5} height={5} color="#ffffff" intensity={2} position={[2, 2, 5]} lookAt={[0, 0, 0]} />
 
         {/* UPDATED GIZMO SETTINGS:
             1. margin={[80, 80]} ensures it sits safely inside the screen limits.
             2. hideNegativeAxes={false} shows the full XYZ structure (-x, -y, -z).
         */}
-        <GizmoHelper alignment="top-right" margin={[80, 80]} renderPriority={2}>
+        <GizmoHelper alignment="top-right" margin={[80, 80]} renderPriority={1}>
           <GizmoViewport
             axisColors={['#ff3b30', '#4cd964', '#007aff']}
             labelColor="white"
@@ -533,9 +522,10 @@ function App() {
         </GizmoHelper>
 
         <EffectComposer disableNormalPass multisampling={0}>
-          <SSAO intensity={13} radius={0.22} luminanceInfluence={0.6} color="#2a2520" />
+          <SSAO intensity={15} radius={0.035} luminanceInfluence={0.6} color="#000000" />
+          <Bloom intensity={0.2} luminanceThreshold={0.9} luminanceSmoothing={0.2} />
           <ToneMapping />
-          <Vignette eskil={false} offset={0.12} darkness={0.2} />
+          <Vignette eskil={false} offset={0.12} darkness={0.18} />
         </EffectComposer>
 
         <ExportEngine />

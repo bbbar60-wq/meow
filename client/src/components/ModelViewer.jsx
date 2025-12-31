@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGLTF, Center, Html, useTexture } from '@react-three/drei';
 import { HexColorPicker } from 'react-colorful';
 import useStore from '../store';
@@ -7,6 +7,90 @@ import * as THREE from 'three';
 import { useThree } from '@react-three/fiber';
 
 const ROUNDED_TEXTURE_SIZE = 256;
+
+function formatHex(color) {
+  return `#${color.getHexString()}`.toUpperCase();
+}
+
+function formatRgb(color) {
+  const r = Math.round(color.r * 255);
+  const g = Math.round(color.g * 255);
+  const b = Math.round(color.b * 255);
+  return `${r}, ${g}, ${b}`;
+}
+
+function normalizeHexInput(value) {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^#?([0-9a-fA-F]{6})$/);
+  if (!match) return null;
+  return `#${match[1]}`;
+}
+
+function normalizeRgbInput(value) {
+  const matches = value.match(/\d{1,3}/g);
+  if (!matches || matches.length < 3) return null;
+  const [r, g, b] = matches.slice(0, 3).map((entry) => Number(entry));
+  if ([r, g, b].some((channel) => Number.isNaN(channel) || channel < 0 || channel > 255)) {
+    return null;
+  }
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function isSecondarySurface(name = '') {
+  const label = name.toLowerCase();
+  return label.includes('base') || label.includes('back') || label.includes('plate') || label.includes('stand');
+}
+
+function buildAcrylicMaterial(source, isSecondary, fingerprintsTexture, scratchesTexture) {
+  const isTranslucent = !isSecondary && (source.transparent || source.opacity < 1);
+  const detailTexture = isSecondary ? scratchesTexture : fingerprintsTexture;
+  let roughnessDetail = null;
+  if (detailTexture) {
+    roughnessDetail = detailTexture.clone();
+    roughnessDetail.wrapS = THREE.RepeatWrapping;
+    roughnessDetail.wrapT = THREE.RepeatWrapping;
+    const repeatValue = isSecondary ? 8 : 12;
+    roughnessDetail.repeat.set(repeatValue, repeatValue);
+    roughnessDetail.needsUpdate = true;
+  }
+  const nextMaterial = new THREE.MeshPhysicalMaterial({
+    name: source.name,
+    color: source.color?.clone?.() ?? new THREE.Color('#ffffff'),
+    map: source.map ?? null,
+    normalMap: source.normalMap ?? null,
+    roughnessMap: roughnessDetail ?? source.roughnessMap ?? null,
+    metalnessMap: source.metalnessMap ?? null,
+    aoMap: source.aoMap ?? null,
+    emissiveMap: source.emissiveMap ?? null,
+    alphaMap: source.alphaMap ?? null,
+    envMap: source.envMap ?? null,
+    transparent: source.transparent ?? false,
+    opacity: source.opacity ?? 1,
+    side: source.side ?? THREE.FrontSide,
+    depthTest: source.depthTest ?? true,
+    depthWrite: source.depthWrite ?? true,
+    emissive: source.emissive?.clone?.() ?? new THREE.Color('#000000'),
+    emissiveIntensity: source.emissiveIntensity ?? 1,
+    clearcoat: isSecondary ? 0.0 : 1.0,
+    clearcoatRoughness: isSecondary ? 0.2 : 0.04,
+    roughness: isSecondary ? 0.35 : 0.06,
+    metalness: 0.0,
+    ior: 1.49,
+    reflectivity: 1.0,
+    specularIntensity: 1.15,
+    specularColor: new THREE.Color('#ffffff'),
+    transmission: isSecondary ? 0.0 : (isTranslucent ? 0.95 : 0),
+    thickness: isTranslucent ? 0.6 : 0,
+    attenuationDistance: isTranslucent ? 0.8 : 0,
+    attenuationColor: isTranslucent ? source.color?.clone?.() ?? new THREE.Color('#ffffff') : new THREE.Color('#ffffff')
+  });
+
+  nextMaterial.normalScale = source.normalScale ?? new THREE.Vector2(1, 1);
+  nextMaterial.aoMapIntensity = source.aoMapIntensity ?? 1;
+  nextMaterial.envMapIntensity = isSecondary ? 1.0 : 1.2;
+  nextMaterial.needsUpdate = true;
+  return nextMaterial;
+}
 
 function createRoundedAlphaTexture(radiusValue) {
   const canvas = document.createElement('canvas');
@@ -209,6 +293,13 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
   const { gl } = useThree(); // Access the renderer to get max anisotropy
   const { interactionMode, setInteractionMode } = useStore();
   const [selectedMesh, setSelectedMesh] = useState(null);
+  const [hexInput, setHexInput] = useState('#FFFFFF');
+  const [rgbInput, setRgbInput] = useState('255, 255, 255');
+  const initializedMaterialsRef = useRef(false);
+  const [fingerprintsTexture, scratchesTexture] = useTexture([
+    '/textures/Fingerprints002_2K-JPG_Roughness.jpg',
+    '/textures/Scratches003_2K-JPG_Color.jpg'
+  ]);
   const imageTextures = useTexture(images.map((image) => image.url));
   const alphaTextures = useMemo(
     () =>
@@ -234,63 +325,35 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
     }
   }, [interactionMode]);
 
-  // --- MATERIAL & TEXTURE OPTIMIZATION ---
   useEffect(() => {
-    if (scene) {
-      scene.traverse((child) => {
-        if (child.isMesh) {
-          if (child.geometry) {
-            child.geometry.computeVertexNormals();
-          }
-
-          // 1. Shadows
-          child.castShadow = true;
-          child.receiveShadow = true;
-
-          // 2. Material Realism
-          if (child.material) {
-            // Clone to allow individual editing
-            if (!child.userData.isOptimized) {
-              const baseColor = child.material.color ? child.material.color.clone() : new THREE.Color('#ffffff');
-              const hsl = { h: 0, s: 0, l: 0 };
-              baseColor.getHSL(hsl);
-              const isGlossy = hsl.s > 0.25 && hsl.l < 0.65;
-
-              child.material = new THREE.MeshPhysicalMaterial({
-                color: baseColor,
-                metalness: isGlossy ? 0.08 : 0.02,
-                roughness: isGlossy ? 0.16 : 0.48,
-                clearcoat: isGlossy ? 0.65 : 0.18,
-                clearcoatRoughness: isGlossy ? 0.08 : 0.45,
-                ior: 1.45,
-                reflectivity: isGlossy ? 0.45 : 0.2,
-                specularIntensity: isGlossy ? 1.1 : 0.6,
-                specularColor: new THREE.Color('#ffffff'),
-                envMapIntensity: isGlossy ? 1.2 : 0.75,
-                side: THREE.DoubleSide
-              });
-
-              // Remove texture maps for a clean, premium material look
-              child.material.map = null;
-              child.material.normalMap = null;
-              child.material.roughnessMap = null;
-              child.material.metalnessMap = null;
-              child.material.aoMap = null;
-
-              // 3. Texture Anisotropy (Crisp textures at angles)
-              if (child.material.map) child.material.map.anisotropy = gl.capabilities.getMaxAnisotropy();
-              if (child.material.normalMap) child.material.normalMap.anisotropy = gl.capabilities.getMaxAnisotropy();
-              if (child.material.roughnessMap) child.material.roughnessMap.anisotropy = gl.capabilities.getMaxAnisotropy();
-              if (child.material.metalnessMap) child.material.metalnessMap.anisotropy = gl.capabilities.getMaxAnisotropy();
-
-              child.material.needsUpdate = true;
-              child.userData.isOptimized = true;
-            }
-          }
-        }
-      });
+    if (selectedMesh?.material?.color) {
+      const color = selectedMesh.material.color;
+      setHexInput(formatHex(color));
+      setRgbInput(formatRgb(color));
     }
-  }, [scene, gl]);
+  }, [selectedMesh]);
+
+  useEffect(() => {
+    if (!scene || initializedMaterialsRef.current) return;
+    scene.traverse((child) => {
+      if (!child.isMesh || !child.material) return;
+      const materialArray = Array.isArray(child.material) ? child.material : [child.material];
+      const updatedMaterials = materialArray.map((material) => {
+        if (material.userData?.isAcrylicMaterial) return material;
+        const isSecondary = isSecondarySurface(child.name) || material.userData?.surface === 'secondary';
+        const nextMaterial = buildAcrylicMaterial(material, isSecondary, fingerprintsTexture, scratchesTexture);
+        nextMaterial.userData = { ...material.userData, isAcrylicMaterial: true };
+        return nextMaterial;
+      });
+      child.material = Array.isArray(child.material) ? updatedMaterials : updatedMaterials[0];
+      child.castShadow = true;
+      child.receiveShadow = true;
+      if (child.geometry) {
+        child.geometry.computeVertexNormals();
+      }
+    });
+    initializedMaterialsRef.current = true;
+  }, [scene, fingerprintsTexture, scratchesTexture]);
 
   useEffect(() => {
     if (!scene) return;
@@ -335,6 +398,9 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
   const handleColorChange = (newColor) => {
     if (selectedMesh?.material) {
       selectedMesh.material.color.set(newColor);
+      const color = new THREE.Color(newColor);
+      setHexInput(formatHex(color));
+      setRgbInput(formatRgb(color));
       if (onMaterialColorChange) {
         onMaterialColorChange(selectedMesh.name || selectedMesh.uuid, newColor);
       }
@@ -347,13 +413,13 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
         <primitive object={scene} />
       </Center>
       {images.map((image, index) => {
-        const texture = imageTextures[index];
-        const alphaMap = alphaTextures[index];
-        if (texture) {
-          texture.colorSpace = THREE.SRGBColorSpace;
-          texture.anisotropy = gl.capabilities.getMaxAnisotropy();
-          texture.needsUpdate = true;
-        }
+      const texture = imageTextures[index];
+      const alphaMap = alphaTextures[index];
+      if (texture) {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = gl.capabilities.getMaxAnisotropy();
+        texture.needsUpdate = true;
+      }
         if (alphaMap) {
           alphaMap.needsUpdate = true;
         }
@@ -373,8 +439,10 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
               map={texture}
               alphaMap={alphaMap}
               transparent
-              roughness={0.5}
-              metalness={0.1}
+              roughness={0.32}
+              metalness={0.0}
+              polygonOffset
+              polygonOffsetFactor={-1}
             />
           </mesh>
         );
@@ -411,8 +479,10 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
               depthTest={false}
               depthWrite={false}
               side={THREE.DoubleSide}
-              roughness={0.4}
-              metalness={0.05}
+              roughness={0.38}
+              metalness={0.0}
+              polygonOffset
+              polygonOffsetFactor={-2}
             />
           </mesh>
         );
@@ -438,6 +508,58 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
                </div>
                <div className="custom-picker" style={{ height: '100px' }}>
                  <HexColorPicker color={'#' + selectedMesh.material.color.getHexString()} onChange={handleColorChange} />
+               </div>
+               <div style={{ marginTop: '10px', display: 'grid', gap: '8px' }}>
+                 <div style={{ display: 'grid', gap: '6px' }}>
+                   <span style={{ color: 'var(--text-muted)', fontSize: '10px', letterSpacing: '1px' }}>HEX</span>
+                   <input
+                     value={hexInput}
+                     onChange={(event) => {
+                       const nextValue = event.target.value;
+                       setHexInput(nextValue);
+                       const normalized = normalizeHexInput(nextValue);
+                       if (normalized) {
+                         handleColorChange(normalized);
+                       }
+                     }}
+                     placeholder="#FFFFFF"
+                     style={{
+                       width: '100%',
+                       background: 'var(--panel-3)',
+                       border: '1px solid var(--border)',
+                       borderRadius: '8px',
+                       padding: '6px 8px',
+                       color: 'var(--text-primary)',
+                       fontSize: '11px',
+                       fontFamily: 'monospace'
+                     }}
+                   />
+                 </div>
+                 <div style={{ display: 'grid', gap: '6px' }}>
+                   <span style={{ color: 'var(--text-muted)', fontSize: '10px', letterSpacing: '1px' }}>RGB</span>
+                   <input
+                     value={rgbInput}
+                     onChange={(event) => {
+                       const nextValue = event.target.value;
+                       setRgbInput(nextValue);
+                       const normalized = normalizeRgbInput(nextValue);
+                       if (normalized) {
+                         handleColorChange(normalized);
+                       }
+                     }}
+                     placeholder="255, 255, 255"
+                     style={{
+                       width: '100%',
+                       background: 'var(--panel-3)',
+                       border: '1px solid var(--border)',
+                       borderRadius: '8px',
+                       padding: '6px 8px',
+                       color: 'var(--text-primary)',
+                       fontSize: '11px',
+                       fontFamily: 'monospace'
+                     }}
+                   />
+                 </div>
                </div>
              </div>
            </div>

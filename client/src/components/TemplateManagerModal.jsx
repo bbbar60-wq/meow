@@ -2,6 +2,33 @@ import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Edit3, Plus, Trash2 } from 'lucide-react';
 
+const templateManagerStyles = `
+.template-scroll {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-right: 6px;
+}
+.template-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.template-scroll::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--panel-2), transparent 50%);
+  border-radius: 999px;
+}
+.template-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent-2), transparent 40%));
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--panel), transparent 60%);
+}
+.template-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent), white 10%), color-mix(in srgb, var(--accent-2), transparent 20%));
+}
+.template-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent), transparent 20%) color-mix(in srgb, var(--panel-2), transparent 50%);
+}
+`;
+
 function formatDate(value) {
   if (!value) return '';
   const date = new Date(value);
@@ -51,6 +78,7 @@ export default function TemplateManagerModal({
             justifyContent: 'center'
           }}
         >
+          <style>{templateManagerStyles}</style>
           <motion.div
             initial={{ scale: 0.96, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -69,10 +97,10 @@ export default function TemplateManagerModal({
               flexDirection: 'column',
               gap: '18px'
             }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-muted)' }}>TEMPLATE LIBRARY</div>
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-muted)' }}>TEMPLATE LIBRARY</div>
                 <div style={{ fontSize: '16px', fontWeight: 600, marginTop: '6px' }}>Pick a saved template</div>
               </div>
               <button
@@ -90,7 +118,7 @@ export default function TemplateManagerModal({
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '360px', overflow: 'auto' }}>
+            <div className="template-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '360px' }}>
               {sortedTemplates.length === 0 && (
                 <div
                   style={{
