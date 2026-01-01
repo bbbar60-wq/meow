@@ -13,14 +13,13 @@ export default function ExportEngine() {
     if (!isExporting) return;
 
     let progress = 0;
-    let frameId = null;
     const originalPixelRatio = gl.getPixelRatio();
 
     const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     const runExportSequence = async () => {
       for (let i = 0; i <= 80; i += 5) {
-        if (useStore.getState().isCancelled) {
+        if (isCancelled || useStore.getState().isCancelled) {
           gl.setPixelRatio(originalPixelRatio);
           return;
         }
@@ -31,13 +30,14 @@ export default function ExportEngine() {
         await wait(50);
       }
 
-      if (useStore.getState().isCancelled) return;
+      if (isCancelled || useStore.getState().isCancelled) return;
       updateProgress(90);
 
       try {
         const highQualityRatio = Math.min(window.devicePixelRatio * 4, 4);
         gl.setPixelRatio(highQualityRatio);
         gl.shadowMap.needsUpdate = true;
+
         gl.render(scene, camera);
 
         const dataUrl = gl.domElement.toDataURL('image/png', 1.0);
@@ -65,7 +65,7 @@ export default function ExportEngine() {
     return () => {
       gl.setPixelRatio(originalPixelRatio);
     };
-  }, [isExporting, gl, scene, camera]);
+  }, [camera, finishExport, gl, isCancelled, isExporting, scene, updateProgress]);
 
   return null;
 }

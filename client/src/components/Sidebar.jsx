@@ -87,6 +87,9 @@ const iconSections = [
   }
 ];
 
+const MotionButton = motion.button;
+const MotionDiv = motion.div;
+
 const Sidebar = memo(function Sidebar({
   onOpenTemplateManager,
   onUploadImage,
@@ -154,7 +157,7 @@ const Sidebar = memo(function Sidebar({
     <>
       <style>{sidebarStyles}</style>
 
-      <motion.button
+      <MotionButton
         onClick={() => setIsOpen(!isOpen)}
         style={{
           position: 'absolute', top: '24px', left: '24px',
@@ -164,14 +167,14 @@ const Sidebar = memo(function Sidebar({
         }}
         whileHover={{ opacity: 1, scale: 1.1 }}
       >
-        <motion.div variants={iconVariants} animate={isOpen ? "open" : "closed"}>
+        <MotionDiv variants={iconVariants} animate={isOpen ? "open" : "closed"}>
           <Menu size={20} strokeWidth={1.5} />
-        </motion.div>
-      </motion.button>
+        </MotionDiv>
+      </MotionButton>
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             onClick={() => setIsOpen(false)}
@@ -183,7 +186,7 @@ const Sidebar = memo(function Sidebar({
         )}
       </AnimatePresence>
 
-      <motion.div
+      <MotionDiv
         initial="closed" animate={isOpen ? "open" : "closed"} variants={sidebarVariants}
         style={{
           position: 'fixed', top: 0, left: 0, width: '280px', height: '100vh',
@@ -196,7 +199,7 @@ const Sidebar = memo(function Sidebar({
           willChange: 'transform'
         }}
       >
-        <motion.button
+        <MotionButton
           onClick={toggleTheme}
           whileHover={{ scale: 1.08, opacity: 0.9 }}
           whileTap={{ scale: 0.96 }}
@@ -218,7 +221,7 @@ const Sidebar = memo(function Sidebar({
           }}
           aria-label="Toggle theme"
         >
-          <motion.div
+          <MotionDiv
             key={theme}
             initial={{ rotate: -90, opacity: 0 }}
             animate={{ rotate: 0, opacity: 1 }}
@@ -226,8 +229,8 @@ const Sidebar = memo(function Sidebar({
             transition={{ duration: 0.2 }}
           >
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </motion.div>
-        </motion.button>
+          </MotionDiv>
+        </MotionButton>
         <div className="sidebar-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '8px', height: '100%' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <SectionHeader>EDITOR</SectionHeader>
@@ -243,7 +246,7 @@ const Sidebar = memo(function Sidebar({
             />
             <AnimatePresence>
               {activeSection === 'images' && images.length > 0 && (
-                <motion.div
+                <MotionDiv
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -309,7 +312,7 @@ const Sidebar = memo(function Sidebar({
                       </div>
                     ))}
                   </div>
-                </motion.div>
+                </MotionDiv>
               )}
             </AnimatePresence>
             <SidebarButton icon={<Palette size={14} />} label="Change Color" onClick={handleChangeColorClick} small disabled={!canManageTemplate} />
@@ -325,7 +328,7 @@ const Sidebar = memo(function Sidebar({
             />
             <AnimatePresence>
               {activeSection === 'texts' && texts.length > 0 && (
-                <motion.div
+                <MotionDiv
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -396,7 +399,7 @@ const Sidebar = memo(function Sidebar({
                       </div>
                     ))}
                   </div>
-                </motion.div>
+                </MotionDiv>
               )}
             </AnimatePresence>
           </div>
@@ -405,12 +408,12 @@ const Sidebar = memo(function Sidebar({
             <SidebarButton icon={<ImageIcon size={16} />} label="Environment" onClick={() => toggleSection('background')} isActive={activeSection === 'background'} hasArrow />
             <AnimatePresence>
               {activeSection === 'background' && (
-                <motion.div
+                <MotionDiv
                   initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}
                 >
                   <EnvironmentControls />
-                </motion.div>
+                </MotionDiv>
               )}
             </AnimatePresence>
           </div>
@@ -428,7 +431,7 @@ const Sidebar = memo(function Sidebar({
             />
             <AnimatePresence>
               {activeSection === 'icons' && (
-                <motion.div
+                <MotionDiv
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -443,7 +446,7 @@ const Sidebar = memo(function Sidebar({
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                           {section.items.map((iconName) => (
-                            <motion.button
+                            <MotionButton
                               key={iconName}
                               type="button"
                               onClick={() => handleImportIconClick({ label: iconName, url: `/Icon/${iconName}.png` })}
@@ -466,13 +469,13 @@ const Sidebar = memo(function Sidebar({
                                 alt={iconName}
                                 style={{ width: '82%', height: '82%', objectFit: 'contain', margin: 'auto', display: 'block' }}
                               />
-                            </motion.button>
+                            </MotionButton>
                           ))}
                         </div>
                       </div>
                     ))}
                   </div>
-                </motion.div>
+                </MotionDiv>
               )}
             </AnimatePresence>
           </div>
@@ -505,7 +508,7 @@ const Sidebar = memo(function Sidebar({
             <SidebarButton icon={<Download size={16} />} label="EXPORT RENDER" onClick={handleExportClick} />
           </div>
         </div>
-      </motion.div>
+      </MotionDiv>
     </>
   );
 });
@@ -515,12 +518,12 @@ function SectionHeader({ children }) {
 }
 
 function LoadingSpinner() {
-  return <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}><Upload size={16} /></motion.div>;
+  return <MotionDiv animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}><Upload size={16} /></MotionDiv>;
 }
 
 const SidebarButton = memo(function SidebarButton({ icon, label, onClick, primary = false, disabled = false, isActive = false, hasArrow = false, small = false, onArrowClick }) {
   return (
-      <motion.button
+      <MotionButton
         whileHover={!disabled ? { x: 4, backgroundColor: primary ? 'var(--accent)' : 'var(--panel-2)' } : {}}
         whileTap={!disabled ? { scale: 0.98 } : {}}
         onClick={onClick} disabled={disabled}
@@ -541,7 +544,7 @@ const SidebarButton = memo(function SidebarButton({ icon, label, onClick, primar
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>{icon}<span>{label}</span></div>
       {hasArrow && (
-        <motion.div
+        <MotionDiv
           role="button"
           tabIndex={0}
           onClick={(event) => {
@@ -566,12 +569,12 @@ const SidebarButton = memo(function SidebarButton({ icon, label, onClick, primar
             outline: 'none'
           }}
         >
-          <motion.div animate={{ rotate: isActive ? 180 : 0 }}>
+          <MotionDiv animate={{ rotate: isActive ? 180 : 0 }}>
             <ChevronDown size={14} color={isActive ? "var(--text-primary)" : "var(--text-muted)"} />
-          </motion.div>
-        </motion.div>
+          </MotionDiv>
+        </MotionDiv>
       )}
-    </motion.button>
+    </MotionButton>
   );
 });
 

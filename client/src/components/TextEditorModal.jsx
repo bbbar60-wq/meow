@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ControlRow from './ControlRow';
 
 export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
@@ -37,11 +37,7 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
     []
   );
 
-  const [form, setForm] = useState({ ...defaultState, ...(initialText || {}) });
-
-  useEffect(() => {
-    setForm({ ...defaultState, ...(initialText || {}) });
-  }, [initialText, defaultState]);
+  const [form, setForm] = useState(() => ({ ...defaultState, ...(initialText || {}) }));
 
   const updateForm = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));

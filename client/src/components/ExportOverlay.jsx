@@ -2,6 +2,8 @@ import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import useStore from '../store';
 
+const MotionDiv = motion.div;
+
 export default function ExportOverlay() {
   const isExporting = useStore((state) => state.isExporting);
   const exportProgress = useStore((state) => state.exportProgress);
@@ -10,7 +12,7 @@ export default function ExportOverlay() {
   return (
     <AnimatePresence>
       {isExporting && (
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           style={{
             position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
@@ -23,7 +25,7 @@ export default function ExportOverlay() {
               Rendering High-Fidelity
             </h2>
             <div style={{ width: '100%', height: '4px', background: 'color-mix(in srgb, var(--panel-2), transparent 30%)', marginBottom: '40px', overflow: 'hidden', borderRadius: '999px' }}>
-              <motion.div initial={{ width: 0 }} animate={{ width: `${exportProgress}%` }} style={{ height: '100%', background: 'linear-gradient(90deg, var(--accent), var(--accent-2))' }} />
+              <MotionDiv initial={{ width: 0 }} animate={{ width: `${exportProgress}%` }} style={{ height: '100%', background: 'linear-gradient(90deg, var(--accent), var(--accent-2))' }} />
             </div>
             <button
               onClick={cancelExport}
@@ -39,7 +41,7 @@ export default function ExportOverlay() {
               Cancel
             </button>
           </div>
-        </motion.div>
+        </MotionDiv>
       )}
     </AnimatePresence>
   );

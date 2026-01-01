@@ -328,10 +328,9 @@ function createTextTexture(textConfig) {
 
 export default function ModelViewer({ url, images, texts, materialOverrides = {}, onMaterialColorChange }) {
   const { scene } = useGLTF(url);
-  const { gl } = useThree();
+  const { gl } = useThree(); // Access the renderer to get max anisotropy
   const interactionMode = useStore((state) => state.interactionMode);
   const setInteractionMode = useStore((state) => state.setInteractionMode);
-
   const [selectedMesh, setSelectedMesh] = useState(null);
   const [hexInput, setHexInput] = useState('#FFFFFF');
   const [rgbInput, setRgbInput] = useState('255, 255, 255');
@@ -344,12 +343,17 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
   const imageUrls = useMemo(() => images.map((image) => image.url), [images]);
   const imageTextures = useTexture(imageUrls);
   const deferredTexts = useDeferredValue(texts);
-  const [textTextureTick, setTextTextureTick] = useState(0);
+  const [alphaTextures, setAlphaTextures] = useState([]);
+  const [textTextureMap, setTextTextureMap] = useState(() => new Map());
   const alphaTextureCache = useRef(new Map());
   const textTextureCache = useRef(new Map());
 
-  const alphaTextures = useMemo(() => {
-    return images.map((image) => {
+  const refreshTextTextureMap = useCallback(() => {
+    setTextTextureMap(new Map(textTextureCache.current));
+  }, []);
+
+  useEffect(() => {
+    const nextTextures = images.map((image) => {
       const cached = alphaTextureCache.current.get(image.id);
       if (cached && cached.cornerRadius === image.cornerRadius) {
         return cached.texture;
@@ -362,15 +366,17 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
       alphaTextureCache.current.set(image.id, { cornerRadius: image.cornerRadius, texture });
       return texture;
     });
+    nextTextures.forEach((texture) => {
+      if (texture) {
+        texture.needsUpdate = true;
+      }
+    });
+    setAlphaTextures(nextTextures);
   }, [images]);
-
-  const textTextureMap = useMemo(() => {
-    textTextureTick;
-    return textTextureCache.current;
-  }, [textTextureTick]);
 
   useEffect(() => {
     if (!deferredTexts.length) return;
+    let didUpdate = false;
     deferredTexts.forEach((text) => {
       const signature = buildTextSignature(text);
       const cached = textTextureCache.current.get(text.id);
@@ -380,9 +386,12 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
       const result = createTextTexture(text);
       const entry = { id: text.id, signature, ...result };
       textTextureCache.current.set(text.id, entry);
-      setTextTextureTick((tick) => tick + 1);
+      didUpdate = true;
     });
-  }, [deferredTexts]);
+    if (didUpdate) {
+      refreshTextTextureMap();
+    }
+  }, [deferredTexts, refreshTextTextureMap]);
 
   useEffect(() => {
     const ids = new Set(images.map((image) => image.id));
@@ -396,20 +405,27 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
 
   useEffect(() => {
     const ids = new Set(deferredTexts.map((text) => text.id));
+    let didUpdate = false;
     textTextureCache.current.forEach((entry, id) => {
       if (!ids.has(id)) {
         entry.texture.dispose?.();
         textTextureCache.current.delete(id);
+        didUpdate = true;
       }
     });
-  }, [deferredTexts]);
+    if (didUpdate) {
+      refreshTextTextureMap();
+    }
+  }, [deferredTexts, refreshTextTextureMap]);
 
   useEffect(() => {
+    const alphaCache = alphaTextureCache.current;
+    const textCache = textTextureCache.current;
     return () => {
-      alphaTextureCache.current.forEach((entry) => entry.texture.dispose?.());
-      alphaTextureCache.current.clear();
-      textTextureCache.current.forEach((entry) => entry.texture.dispose?.());
-      textTextureCache.current.clear();
+      alphaCache.forEach((entry) => entry.texture.dispose?.());
+      alphaCache.clear();
+      textCache.forEach((entry) => entry.texture.dispose?.());
+      textCache.clear();
     };
   }, []);
 
@@ -432,20 +448,6 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
       entry.texture.needsUpdate = true;
     });
   }, [gl, textTextureMap]);
-
-  useEffect(() => {
-    if (interactionMode !== 'color') {
-      setSelectedMesh(null);
-    }
-  }, [interactionMode]);
-
-  useEffect(() => {
-    if (selectedMesh?.material?.color) {
-      const color = selectedMesh.material.color;
-      setHexInput(formatHex(color));
-      setRgbInput(formatRgb(color));
-    }
-  }, [selectedMesh]);
 
   useEffect(() => {
     if (!scene || initializedMaterialsRef.current) return;
@@ -500,12 +502,18 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
     if (interactionMode === 'color') {
       e.stopPropagation();
       setSelectedMesh(e.object);
+      if (e.object?.material?.color) {
+        const color = e.object.material.color;
+        setHexInput(formatHex(color));
+        setRgbInput(formatRgb(color));
+      }
     }
   };
 
   const handleClosePopup = (e) => {
     e.stopPropagation();
     setInteractionMode('view');
+    setSelectedMesh(null);
   };
 
   const handleColorChange = (newColor) => {
@@ -532,9 +540,6 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
       {images.map((image, index) => {
       const texture = imageTextures[index];
       const alphaMap = alphaTextures[index];
-        if (alphaMap) {
-          alphaMap.needsUpdate = true;
-        }
         return (
           <mesh
             key={image.id}

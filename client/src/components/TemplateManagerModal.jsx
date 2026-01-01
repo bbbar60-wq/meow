@@ -29,6 +29,8 @@ const templateManagerStyles = `
 }
 `;
 
+const MotionDiv = motion.div;
+
 function formatDate(value) {
   if (!value) return '';
   const date = new Date(value);
@@ -63,7 +65,7 @@ export default function TemplateManagerModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -78,38 +80,35 @@ export default function TemplateManagerModal({
             justifyContent: 'center'
           }}
         >
-          <style>{templateManagerStyles}</style>
-          <motion.div
+          <MotionDiv
             initial={{ scale: 0.96, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.96, opacity: 0 }}
             transition={{ duration: 0.2 }}
             style={{
-              width: '720px',
+              width: '820px',
               maxWidth: '92vw',
               background: 'var(--panel)',
+              borderRadius: '24px',
               border: '1px solid var(--border)',
-              borderRadius: '20px',
-              padding: '24px',
-              color: 'var(--text-primary)',
+              padding: '22px',
               boxShadow: 'var(--shadow)',
+              color: 'var(--text-primary)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '18px'
+              gap: '16px'
             }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-muted)' }}>TEMPLATE LIBRARY</div>
-                <div style={{ fontSize: '16px', fontWeight: 600, marginTop: '6px' }}>Pick a saved template</div>
-              </div>
+          >
+            <style>{templateManagerStyles}</style>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '12px', letterSpacing: '2px', color: 'var(--text-muted)' }}>TEMPLATES</div>
               <button
                 onClick={onClose}
                 style={{
                   background: 'transparent',
                   border: '1px solid var(--border)',
                   color: 'var(--text-muted)',
-                  borderRadius: '12px',
+                  borderRadius: '10px',
                   padding: '6px 12px',
                   cursor: 'pointer'
                 }}
@@ -117,97 +116,58 @@ export default function TemplateManagerModal({
                 Close
               </button>
             </div>
-
-            <div className="template-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '360px' }}>
-              {sortedTemplates.length === 0 && (
-                <div
-                  style={{
-                    padding: '20px',
-                    borderRadius: '14px',
-                    border: '1px dashed var(--border)',
-                    textAlign: 'center',
-                    color: 'var(--text-muted)',
-                    fontSize: '12px'
-                  }}
-                >
-                  No templates yet. Upload your first blend file to begin.
-                </div>
-              )}
+            <div className="template-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '420px' }}>
               {sortedTemplates.map((template) => (
                 <div
                   key={template.id}
                   onMouseEnter={() => setHoveredId(template.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  onClick={() => handleSelectTemplate?.(template)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      handleSelectTemplate?.(template);
-                    }
-                  }}
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: '72px 1fr 140px 140px',
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: '16px',
-                    padding: '12px',
-                    borderRadius: '14px',
+                    gap: '14px',
+                    background: 'var(--panel-2)',
                     border: '1px solid var(--border)',
-                    background: hoveredId === template.id ? 'var(--panel-2)' : 'var(--panel)',
-                    transition: 'background 0.2s',
+                    borderRadius: '14px',
+                    padding: '12px',
                     cursor: 'pointer'
                   }}
+                  onClick={() => handleSelectTemplate?.(template)}
                 >
                   <div
                     style={{
-                      width: '72px',
-                      height: '56px',
+                      width: '110px',
+                      height: '70px',
                       borderRadius: '12px',
                       background: 'var(--panel-3)',
-                      border: '1px solid var(--border)',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-muted)',
-                      fontSize: '10px'
+                      backgroundImage: template.previewUrl ? `url(${template.previewUrl})` : 'none',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      border: '1px solid var(--border)'
                     }}
-                  >
-                    {template.previewUrl ? (
-                      <img src={template.previewUrl} alt={template.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      'Preview'
-                    )}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600 }}>{template.name}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                      Updated {formatDate(template.updatedAt)}
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{template.name}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Last edited {formatDate(template.updatedAt)}</div>
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'right' }}>
-                    {formatDate(template.createdAt)}
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', opacity: hoveredId === template.id ? 1 : 0.9, transition: 'opacity 0.2s' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <button
                       onClick={(event) => {
                         event.stopPropagation();
                         handleSelectTemplate?.(template);
                       }}
                       style={{
+                        background: 'transparent',
                         border: '1px solid var(--border)',
-                        background: 'var(--panel-2)',
-                        color: 'var(--text-primary)',
+                        color: 'var(--text-secondary)',
                         borderRadius: '10px',
                         padding: '6px 10px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '11px'
+                        cursor: 'pointer'
                       }}
                     >
-                      <Edit3 size={12} />
-                      Edit
+                      <Edit3 size={14} />
                     </button>
                     <button
                       onClick={(event) => {
@@ -215,52 +175,42 @@ export default function TemplateManagerModal({
                         handleRequestDelete?.(template.id);
                       }}
                       style={{
-                        border: '1px solid color-mix(in srgb, #ff8c8c, transparent 60%)',
-                        background: 'color-mix(in srgb, #ff8c8c, transparent 85%)',
-                        color: '#ff8c8c',
+                        background: hoveredId === template.id ? 'rgba(255, 107, 107, 0.15)' : 'transparent',
+                        border: '1px solid var(--border)',
+                        color: hoveredId === template.id ? '#ff6b6b' : 'var(--text-secondary)',
                         borderRadius: '10px',
                         padding: '6px 10px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '11px'
+                        cursor: 'pointer'
                       }}
                     >
-                      <Trash2 size={12} />
-                      Delete
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
               ))}
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => {
-                  handleRequestUpload?.();
-                  onClose();
-                }}
-                style={{
-                  background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-                  color: '#0c0d14',
-                  border: '1px solid transparent',
-                  borderRadius: '999px',
-                  padding: '10px 18px',
-                  fontSize: '12px',
-                  letterSpacing: '1px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer'
-                }}
-              >
-                <Plus size={14} />
-                Upload New Template
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
+            <button
+              onClick={handleRequestUpload}
+              style={{
+                marginTop: '10px',
+                alignSelf: 'flex-start',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
+                border: 'none',
+                color: '#0c0d14',
+                padding: '10px 16px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontWeight: 600
+              }}
+            >
+              <Plus size={16} />
+              New Template
+            </button>
+          </MotionDiv>
+        </MotionDiv>
       )}
     </AnimatePresence>
   );

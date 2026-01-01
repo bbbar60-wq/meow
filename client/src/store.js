@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const useStore = create((set, get) => ({
+const useStore = create((set) => ({
   // --- 3D Model State ---
   modelUrl: null,
   isUploading: false,

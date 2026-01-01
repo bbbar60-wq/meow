@@ -1,11 +1,13 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+const MotionDiv = motion.div;
+
 export default function ConfirmDialog({ isOpen, title, description, confirmLabel, onCancel, onConfirm }) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -20,7 +22,7 @@ export default function ConfirmDialog({ isOpen, title, description, confirmLabel
             justifyContent: 'center'
           }}
         >
-          <motion.div
+          <MotionDiv
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -67,8 +69,8 @@ export default function ConfirmDialog({ isOpen, title, description, confirmLabel
                 {confirmLabel}
               </button>
             </div>
-          </motion.div>
-        </motion.div>
+          </MotionDiv>
+        </MotionDiv>
       )}
     </AnimatePresence>
   );

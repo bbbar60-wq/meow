@@ -19,6 +19,8 @@ import AssetEditorPanel from './components/AssetEditorPanel';
 import TextEditorModal from './components/TextEditorModal';
 import ConfirmDialog from './components/ConfirmDialog';
 
+const MotionDiv = motion.div;
+
 function App() {
   const modelUrl = useStore((state) => state.modelUrl);
   const setModelUrl = useStore((state) => state.setModelUrl);
@@ -29,7 +31,6 @@ function App() {
   const setInteractionMode = useStore((state) => state.setInteractionMode);
   const setBackgroundColor = useStore((state) => state.setBackgroundColor);
   const theme = useStore((state) => state.theme);
-
   const imageInputRef = useRef(null);
   const templateInputRef = useRef(null);
   const rendererRef = useRef(null);
@@ -48,7 +49,10 @@ function App() {
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const saveTimeoutRef = useRef(null);
   const templateDataRef = useRef({});
-  const api = useMemo(() => axios.create({ baseURL: 'http://localhost:5000' }), []);
+  const api = useMemo(() => axios.create({
+    baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5000',
+    timeout: 10000
+  }), []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -127,7 +131,7 @@ function App() {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const response = await axios.post('http://localhost:5000/upload', formData, {
+      const response = await api.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data.url;
@@ -138,7 +142,7 @@ function App() {
     } finally {
       setUploading(false);
     }
-  }, [setError, setUploading]);
+  }, [api, setError, setUploading]);
 
   const handleRequestImageUpload = useCallback(() => {
     if (imageInputRef.current) {
@@ -494,6 +498,7 @@ function App() {
           gl.shadowMap.type = THREE.PCFSoftShadowMap;
           rendererRef.current = gl;
         }}
+        // Detect clicks on the empty background
         onPointerMissed={handleCanvasMiss}
       >
         <color attach="background" args={[backgroundColor]} />
@@ -526,6 +531,10 @@ function App() {
         <ambientLight intensity={0.7} />
         <rectAreaLight width={5} height={5} color="#ffffff" intensity={2} position={[2, 2, 5]} lookAt={[0, 0, 0]} />
 
+        {/* UPDATED GIZMO SETTINGS:
+            1. margin={[80, 80]} ensures it sits safely inside the screen limits.
+            2. hideNegativeAxes={false} shows the full XYZ structure (-x, -y, -z).
+        */}
         <GizmoHelper alignment="top-right" margin={[80, 80]} renderPriority={1}>
           <GizmoViewport
             axisColors={['#ff3b30', '#4cd964', '#007aff']}
@@ -535,7 +544,7 @@ function App() {
           />
         </GizmoHelper>
 
-        <EffectComposer disableNormalPass multisampling={0}>
+        <EffectComposer multisampling={0}>
           <SSAO intensity={15} radius={0.035} luminanceInfluence={0.6} color="#000000" />
           <Bloom intensity={0.2} luminanceThreshold={0.9} luminanceSmoothing={0.2} />
           <ToneMapping />
@@ -574,7 +583,7 @@ function App() {
       >
         <AnimatePresence mode="wait">
           {saveState === 'saved' ? (
-            <motion.div
+            <MotionDiv
               key="saved"
               initial={{ scale: 0.6, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -584,9 +593,9 @@ function App() {
             >
               <CheckCircle2 size={16} color="var(--accent-2)" />
               <span>Saved</span>
-            </motion.div>
+            </MotionDiv>
           ) : (
-            <motion.div
+            <MotionDiv
               key="idle"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -596,7 +605,7 @@ function App() {
             >
               <Cloud size={16} color="var(--text-secondary)" />
               <span>Auto-save</span>
-            </motion.div>
+            </MotionDiv>
           )}
         </AnimatePresence>
       </div>
@@ -624,6 +633,7 @@ function App() {
 
       {isTextModalOpen && (
         <TextEditorModal
+          key={editingTextId ?? 'new'}
           initialText={texts.find((text) => text.id === editingTextId)}
           onCancel={() => setIsTextModalOpen(false)}
           onSubmit={handleSaveText}
