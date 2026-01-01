@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useGLTF, Center, Html, useTexture } from '@react-three/drei';
 import { HexColorPicker } from 'react-colorful';
 import useStore from '../store';
@@ -124,6 +124,44 @@ function createRoundedAlphaTexture(radiusValue) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.needsUpdate = true;
   return texture;
+}
+
+const TEXTURE_FIELDS = [
+  'content',
+  'color',
+  'fontSize',
+  'fontFamily',
+  'fontWeight',
+  'isBold',
+  'isItalic',
+  'alignment',
+  'textDecoration',
+  'backgroundColor',
+  'textBackgroundColor',
+  'highlightColor',
+  'enableHighlight',
+  'lineHeight',
+  'letterSpacing',
+  'textShadowColor',
+  'textShadowBlur',
+  'textShadowOffsetX',
+  'textShadowOffsetY',
+  'textTransform',
+  'caseControl',
+  'padding',
+  'maxWidth',
+  'maxHeight',
+  'textOverflow',
+  'paragraphSpacing',
+  'verticalAlign'
+];
+
+function buildTextSignature(text) {
+  const payload = TEXTURE_FIELDS.reduce((acc, key) => {
+    acc[key] = text[key];
+    return acc;
+  }, {});
+  return JSON.stringify(payload);
 }
 
 function applyTextTransforms(text, transform, caseControl) {
@@ -290,35 +328,111 @@ function createTextTexture(textConfig) {
 
 export default function ModelViewer({ url, images, texts, materialOverrides = {}, onMaterialColorChange }) {
   const { scene } = useGLTF(url);
-  const { gl } = useThree(); // Access the renderer to get max anisotropy
-  const { interactionMode, setInteractionMode } = useStore();
+  const { gl } = useThree();
+  const interactionMode = useStore((state) => state.interactionMode);
+  const setInteractionMode = useStore((state) => state.setInteractionMode);
+
   const [selectedMesh, setSelectedMesh] = useState(null);
   const [hexInput, setHexInput] = useState('#FFFFFF');
   const [rgbInput, setRgbInput] = useState('255, 255, 255');
   const initializedMaterialsRef = useRef(false);
+  const pendingColorRef = useRef(null);
   const [fingerprintsTexture, scratchesTexture] = useTexture([
     '/textures/Fingerprints002_2K-JPG_Roughness.jpg',
     '/textures/Scratches003_2K-JPG_Color.jpg'
   ]);
-  const imageTextures = useTexture(images.map((image) => image.url));
-  const alphaTextures = useMemo(
-    () =>
-      images.map((image) => {
-        const radius = image.cornerRadius / 50;
-        return createRoundedAlphaTexture(radius);
-      }),
-    [images]
-  );
-  const textTextures = useMemo(
-    () =>
-      texts.map((text) => {
-        const result = createTextTexture(text);
-        return { id: text.id, ...result };
-      }),
-    [texts]
-  );
+  const imageUrls = useMemo(() => images.map((image) => image.url), [images]);
+  const imageTextures = useTexture(imageUrls);
+  const deferredTexts = useDeferredValue(texts);
+  const [textTextureTick, setTextTextureTick] = useState(0);
+  const alphaTextureCache = useRef(new Map());
+  const textTextureCache = useRef(new Map());
 
-  // --- LOGIC: SYNC STATE ---
+  const alphaTextures = useMemo(() => {
+    return images.map((image) => {
+      const cached = alphaTextureCache.current.get(image.id);
+      if (cached && cached.cornerRadius === image.cornerRadius) {
+        return cached.texture;
+      }
+      if (cached?.texture) {
+        cached.texture.dispose?.();
+      }
+      const radius = image.cornerRadius / 50;
+      const texture = createRoundedAlphaTexture(radius);
+      alphaTextureCache.current.set(image.id, { cornerRadius: image.cornerRadius, texture });
+      return texture;
+    });
+  }, [images]);
+
+  const textTextureMap = useMemo(() => {
+    textTextureTick;
+    return textTextureCache.current;
+  }, [textTextureTick]);
+
+  useEffect(() => {
+    if (!deferredTexts.length) return;
+    deferredTexts.forEach((text) => {
+      const signature = buildTextSignature(text);
+      const cached = textTextureCache.current.get(text.id);
+      if (cached && cached.signature === signature) {
+        return;
+      }
+      const result = createTextTexture(text);
+      const entry = { id: text.id, signature, ...result };
+      textTextureCache.current.set(text.id, entry);
+      setTextTextureTick((tick) => tick + 1);
+    });
+  }, [deferredTexts]);
+
+  useEffect(() => {
+    const ids = new Set(images.map((image) => image.id));
+    alphaTextureCache.current.forEach((entry, id) => {
+      if (!ids.has(id)) {
+        entry.texture.dispose?.();
+        alphaTextureCache.current.delete(id);
+      }
+    });
+  }, [images]);
+
+  useEffect(() => {
+    const ids = new Set(deferredTexts.map((text) => text.id));
+    textTextureCache.current.forEach((entry, id) => {
+      if (!ids.has(id)) {
+        entry.texture.dispose?.();
+        textTextureCache.current.delete(id);
+      }
+    });
+  }, [deferredTexts]);
+
+  useEffect(() => {
+    return () => {
+      alphaTextureCache.current.forEach((entry) => entry.texture.dispose?.());
+      alphaTextureCache.current.clear();
+      textTextureCache.current.forEach((entry) => entry.texture.dispose?.());
+      textTextureCache.current.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    const maxAnisotropy = gl.capabilities.getMaxAnisotropy();
+    imageTextures.forEach((texture) => {
+      if (!texture) return;
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = maxAnisotropy;
+      texture.needsUpdate = true;
+    });
+  }, [gl, imageTextures]);
+
+  useEffect(() => {
+    const maxAnisotropy = gl.capabilities.getMaxAnisotropy();
+    textTextureMap.forEach((entry) => {
+      if (!entry?.texture) return;
+      entry.texture.colorSpace = THREE.SRGBColorSpace;
+      entry.texture.anisotropy = maxAnisotropy;
+      entry.texture.needsUpdate = true;
+    });
+  }, [gl, textTextureMap]);
+
   useEffect(() => {
     if (interactionMode !== 'color') {
       setSelectedMesh(null);
@@ -369,7 +483,6 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
     });
   }, [scene, materialOverrides]);
 
-  // --- HANDLERS ---
   const handlePointerOver = (e) => {
     if (interactionMode === 'color') {
       e.stopPropagation();
@@ -401,11 +514,15 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
       const color = new THREE.Color(newColor);
       setHexInput(formatHex(color));
       setRgbInput(formatRgb(color));
-      if (onMaterialColorChange) {
-        onMaterialColorChange(selectedMesh.name || selectedMesh.uuid, newColor);
-      }
+      pendingColorRef.current = newColor;
     }
   };
+
+  const handleCommitColor = useCallback(() => {
+    if (!selectedMesh || !pendingColorRef.current || !onMaterialColorChange) return;
+    onMaterialColorChange(selectedMesh.name || selectedMesh.uuid, pendingColorRef.current);
+    pendingColorRef.current = null;
+  }, [onMaterialColorChange, selectedMesh]);
 
   return (
     <group onClick={handleClick} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut}>
@@ -415,11 +532,6 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
       {images.map((image, index) => {
       const texture = imageTextures[index];
       const alphaMap = alphaTextures[index];
-      if (texture) {
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.anisotropy = gl.capabilities.getMaxAnisotropy();
-        texture.needsUpdate = true;
-      }
         if (alphaMap) {
           alphaMap.needsUpdate = true;
         }
@@ -449,12 +561,9 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
       })}
 
       {texts.map((text) => {
-        const textureData = textTextures.find((entry) => entry.id === text.id);
+        const textureData = textTextureMap.get(text.id);
         if (!textureData) return null;
         const { texture, width, height } = textureData;
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.anisotropy = gl.capabilities.getMaxAnisotropy();
-        texture.needsUpdate = true;
 
         const aspect = width / height;
         const planeWidth = 1.2;
@@ -499,6 +608,8 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
                }}
                onPointerDown={(e) => e.stopPropagation()}
                onClick={(e) => e.stopPropagation()}
+               onPointerUp={handleCommitColor}
+               onMouseLeave={handleCommitColor}
              >
                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
                  <span style={{ color: 'var(--text-muted)', fontSize: '10px', letterSpacing: '1px', fontWeight: '600' }}>COLOR</span>

@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 
-export default function ControlRow({ label, value, min, max, step, onChange, allowNegative = true }) {
+const ControlRow = memo(function ControlRow({ label, value, min, max, step, onChange, allowNegative = true }) {
   const [localValue, setLocalValue] = useState(value);
   const rafRef = useRef(null);
 
@@ -8,8 +8,8 @@ export default function ControlRow({ label, value, min, max, step, onChange, all
     setLocalValue(value);
   }, [value]);
 
-  const commitValue = (nextValue) => {
-    if (Number.isNaN(nextValue)) {
+  const commitValue = useCallback((nextValue) => {
+    if (Number.isNaN(nextValue) || nextValue === '') {
       return;
     }
     if (!allowNegative && nextValue < 0) {
@@ -22,13 +22,16 @@ export default function ControlRow({ label, value, min, max, step, onChange, all
     rafRef.current = requestAnimationFrame(() => {
       onChange(clamped);
     });
-  };
+  }, [allowNegative, max, min, onChange]);
 
-  const handleInputChange = (event) => {
+  const handleInputChange = useCallback((event) => {
     const nextValue = Number(event.target.value);
     setLocalValue(event.target.value === '' ? '' : nextValue);
-    commitValue(nextValue);
-  };
+  }, []);
+
+  const handleCommit = useCallback(() => {
+    commitValue(typeof localValue === 'string' ? Number(localValue) : localValue);
+  }, [commitValue, localValue]);
 
   return (
     <div style={{ marginBottom: '10px' }}>
@@ -41,6 +44,7 @@ export default function ControlRow({ label, value, min, max, step, onChange, all
           max={max}
           step={step}
           onChange={handleInputChange}
+          onBlur={handleCommit}
           onFocus={(event) => event.target.select()}
           style={{
             width: '72px',
@@ -60,8 +64,12 @@ export default function ControlRow({ label, value, min, max, step, onChange, all
         max={max}
         step={step}
         onInput={handleInputChange}
+        onPointerUp={handleCommit}
+        onMouseLeave={handleCommit}
         style={{ width: '100%' }}
       />
     </div>
   );
-}
+});
+
+export default ControlRow;

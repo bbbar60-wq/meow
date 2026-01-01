@@ -20,17 +20,16 @@ import TextEditorModal from './components/TextEditorModal';
 import ConfirmDialog from './components/ConfirmDialog';
 
 function App() {
-  const {
-    modelUrl,
-    setModelUrl,
-    setUploading,
-    setError,
-    backgroundColor,
-    interactionMode,
-    setInteractionMode,
-    setBackgroundColor,
-    theme
-  } = useStore();
+  const modelUrl = useStore((state) => state.modelUrl);
+  const setModelUrl = useStore((state) => state.setModelUrl);
+  const setUploading = useStore((state) => state.setUploading);
+  const setError = useStore((state) => state.setError);
+  const backgroundColor = useStore((state) => state.backgroundColor);
+  const interactionMode = useStore((state) => state.interactionMode);
+  const setInteractionMode = useStore((state) => state.setInteractionMode);
+  const setBackgroundColor = useStore((state) => state.setBackgroundColor);
+  const theme = useStore((state) => state.theme);
+
   const imageInputRef = useRef(null);
   const templateInputRef = useRef(null);
   const rendererRef = useRef(null);
@@ -118,7 +117,7 @@ function App() {
     };
   }, [modelUrl, backgroundColor, images, texts, materialOverrides]);
 
-  const uploadBlendFile = async (file) => {
+  const uploadBlendFile = useCallback(async (file) => {
     if (!file.name.endsWith('.blend')) {
       alert("Please upload a .blend file");
       return null;
@@ -139,15 +138,23 @@ function App() {
     } finally {
       setUploading(false);
     }
-  };
+  }, [setError, setUploading]);
 
-  const handleRequestImageUpload = () => {
+  const handleRequestImageUpload = useCallback(() => {
     if (imageInputRef.current) {
       imageInputRef.current.click();
     }
-  };
+  }, []);
 
-  const handleImportIcon = (icon) => {
+  const handleOpenTemplateManager = useCallback(() => {
+    setIsTemplateModalOpen(true);
+  }, []);
+
+  const handleOpenQrGenerator = useCallback(() => {
+    setIsQrModalOpen(true);
+  }, []);
+
+  const handleImportIcon = useCallback((icon) => {
     const newImage = {
       id: `${Date.now()}-${icon.label}`,
       name: `${icon.label}.png`,
@@ -159,9 +166,9 @@ function App() {
     };
     setImages((prev) => [...prev, newImage]);
     setActiveImageId(null);
-  };
+  }, []);
 
-  const handleImageFileChange = async (event) => {
+  const handleImageFileChange = useCallback(async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     let objectUrl = null;
@@ -189,40 +196,38 @@ function App() {
     setImages((prev) => [...prev, newImage]);
     setActiveImageId(null);
     event.target.value = '';
-  };
+  }, []);
 
   useEffect(() => {
     setActiveImageId(null);
     setActiveTextId(null);
   }, [interactionMode]);
 
-  // --- BACKGROUND CLICK HANDLER ---
-  const handleCanvasMiss = () => {
+  const handleCanvasMiss = useCallback(() => {
     if (interactionMode === 'color') {
-      // User clicked background -> Exit color mode
       setInteractionMode('view');
     }
-  };
+  }, [interactionMode, setInteractionMode]);
 
-  const handleSelectImage = (id) => {
+  const handleSelectImage = useCallback((id) => {
     setActiveImageId(id);
     setActiveTextId(null);
-  };
+  }, []);
 
-  const handleUpdateImage = (id, updates) => {
+  const handleUpdateImage = useCallback((id, updates) => {
     setImages((prev) =>
       prev.map((image) => (image.id === id ? { ...image, ...updates } : image))
     );
-  };
+  }, []);
 
-  const handleDeleteImage = (id) => {
+  const handleDeleteImage = useCallback((id) => {
     setImages((prev) => prev.filter((image) => image.id !== id));
     if (activeImageId === id) {
       setActiveImageId(null);
     }
-  };
+  }, [activeImageId]);
 
-  const handleCreateQrImage = (dataUrl) => {
+  const handleCreateQrImage = useCallback((dataUrl) => {
     if (!dataUrl) return;
     const newImage = {
       id: `${Date.now()}-qr`,
@@ -236,19 +241,19 @@ function App() {
     setImages((prev) => [...prev, newImage]);
     setActiveImageId(newImage.id);
     setIsQrModalOpen(false);
-  };
+  }, []);
 
-  const handleOpenTextModal = () => {
+  const handleOpenTextModal = useCallback(() => {
     setEditingTextId(null);
     setIsTextModalOpen(true);
-  };
+  }, []);
 
-  const handleEditText = (id) => {
+  const handleEditText = useCallback((id) => {
     setEditingTextId(id);
     setIsTextModalOpen(true);
-  };
+  }, []);
 
-  const handleSaveText = (textData) => {
+  const handleSaveText = useCallback((textData) => {
     if (editingTextId) {
       setTexts((prev) =>
         prev.map((text) => (text.id === editingTextId ? { ...text, ...textData } : text))
@@ -266,33 +271,39 @@ function App() {
       setActiveTextId(newText.id);
     }
     setIsTextModalOpen(false);
-  };
+  }, [editingTextId]);
 
-  const handleDeleteText = (id) => {
+  const handleDeleteText = useCallback((id) => {
     setTexts((prev) => prev.filter((text) => text.id !== id));
     if (activeTextId === id) {
       setActiveTextId(null);
     }
-  };
+  }, [activeTextId]);
 
-  const handleSelectText = (id) => {
+  const handleSelectText = useCallback((id) => {
     setActiveTextId(id);
     setActiveImageId(null);
     handleEditText(id);
-  };
+  }, [handleEditText]);
 
-  const handleUpdateText = (id, updates) => {
+  const handleUpdateText = useCallback((id, updates) => {
     setTexts((prev) =>
       prev.map((text) => (text.id === id ? { ...text, ...updates } : text))
     );
-  };
+  }, []);
 
-  const handleMaterialColorChange = (meshKey, color) => {
+  const handleMaterialColorChange = useCallback((meshKey, color) => {
     setMaterialOverrides((prev) => ({ ...prev, [meshKey]: color }));
-  };
+  }, []);
 
-  const activeImage = images.find((image) => image.id === activeImageId);
-  const activeText = texts.find((text) => text.id === activeTextId);
+  const activeImage = useMemo(
+    () => images.find((image) => image.id === activeImageId),
+    [activeImageId, images]
+  );
+  const activeText = useMemo(
+    () => texts.find((text) => text.id === activeTextId),
+    [activeTextId, texts]
+  );
 
   const capturePreview = useCallback(() => {
     if (!rendererRef.current) return null;
@@ -336,6 +347,14 @@ function App() {
     }
   }, [activeTemplateId, api, capturePreview, templates, triggerSaveIndicator]);
 
+  const handleSaveTemplate = useCallback(() => {
+    saveTemplate(activeTemplateId);
+  }, [activeTemplateId, saveTemplate]);
+
+  const handleDeleteTemplateRequest = useCallback(() => {
+    setPendingDeleteId(activeTemplateId);
+  }, [activeTemplateId]);
+
   const handleDeleteTemplate = useCallback(async (templateId) => {
     try {
       await api.delete(`/templates/${templateId}`);
@@ -353,7 +372,7 @@ function App() {
     }
   }, [activeTemplateId, api, setBackgroundColor, setModelUrl]);
 
-  const handleOpenTemplate = (template) => {
+  const handleOpenTemplate = useCallback((template) => {
     setModelUrl(template.modelUrl);
     setImages(template.images || []);
     setTexts(template.texts || []);
@@ -361,15 +380,15 @@ function App() {
     setBackgroundColor(template.backgroundColor || '#ded7cc');
     setActiveTemplateId(template.id);
     setIsTemplateModalOpen(false);
-  };
+  }, [setBackgroundColor, setModelUrl]);
 
-  const handleRequestTemplateUpload = () => {
+  const handleRequestTemplateUpload = useCallback(() => {
     if (templateInputRef.current) {
       templateInputRef.current.click();
     }
-  };
+  }, []);
 
-  const handleTemplateUpload = async (event) => {
+  const handleTemplateUpload = useCallback(async (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
@@ -403,7 +422,7 @@ function App() {
     } catch (error) {
       console.error('Failed to create template', error);
     }
-  };
+  }, [api, saveTemplate, setBackgroundColor, setModelUrl, uploadBlendFile]);
 
   useEffect(() => {
     if (!activeTemplateId) return undefined;
@@ -427,10 +446,10 @@ function App() {
         button, input, select, textarea { font-family: "Inter", sans-serif; }
       `}</style>
       <Sidebar
-        onOpenTemplateManager={() => setIsTemplateModalOpen(true)}
+        onOpenTemplateManager={handleOpenTemplateManager}
         onUploadImage={handleRequestImageUpload}
         onImportIcon={handleImportIcon}
-        onOpenQrGenerator={() => setIsQrModalOpen(true)}
+        onOpenQrGenerator={handleOpenQrGenerator}
         images={images}
         onSelectImage={handleSelectImage}
         onDeleteImage={handleDeleteImage}
@@ -438,8 +457,8 @@ function App() {
         onOpenTextModal={handleOpenTextModal}
         onSelectText={handleSelectText}
         onDeleteText={handleDeleteText}
-        onSaveTemplate={() => saveTemplate(activeTemplateId)}
-        onDeleteTemplate={() => setPendingDeleteId(activeTemplateId)}
+        onSaveTemplate={handleSaveTemplate}
+        onDeleteTemplate={handleDeleteTemplateRequest}
         canManageTemplate={Boolean(activeTemplateId)}
       />
       <input
@@ -475,7 +494,6 @@ function App() {
           gl.shadowMap.type = THREE.PCFSoftShadowMap;
           rendererRef.current = gl;
         }}
-        // Detect clicks on the empty background
         onPointerMissed={handleCanvasMiss}
       >
         <color attach="background" args={[backgroundColor]} />
@@ -508,10 +526,6 @@ function App() {
         <ambientLight intensity={0.7} />
         <rectAreaLight width={5} height={5} color="#ffffff" intensity={2} position={[2, 2, 5]} lookAt={[0, 0, 0]} />
 
-        {/* UPDATED GIZMO SETTINGS:
-            1. margin={[80, 80]} ensures it sits safely inside the screen limits.
-            2. hideNegativeAxes={false} shows the full XYZ structure (-x, -y, -z).
-        */}
         <GizmoHelper alignment="top-right" margin={[80, 80]} renderPriority={1}>
           <GizmoViewport
             axisColors={['#ff3b30', '#4cd964', '#007aff']}

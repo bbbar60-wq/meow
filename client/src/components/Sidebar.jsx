@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HexColorPicker } from 'react-colorful';
 import {
@@ -38,7 +38,56 @@ const sidebarStyles = `
 }
 `;
 
-export default function Sidebar({
+const sidebarVariants = {
+  closed: { x: "-100%", transition: { type: "spring", stiffness: 400, damping: 40 } },
+  open: { x: 0, transition: { type: "spring", stiffness: 400, damping: 40 } }
+};
+
+const iconVariants = {
+  closed: { rotate: 0 },
+  open: { rotate: 90 }
+};
+
+const iconSections = [
+  {
+    title: 'Instagram',
+    items: ['instagram-colored', 'instagram-black', 'instagram-white']
+  },
+  {
+    title: 'Telegram',
+    items: ['telegram-colored', 'telegram-black', 'telegram-white']
+  },
+  {
+    title: 'Whatsapp',
+    items: ['whatsapp-colored', 'whatsapp-black', 'whatsapp-white']
+  },
+  {
+    title: 'Linkedin',
+    items: ['linkedin-colored', 'linkedin-black', 'linkedin-white']
+  },
+  {
+    title: 'Rubika',
+    items: ['rubika-colored', 'rubika-black', 'rubika-white']
+  },
+  {
+    title: 'Website',
+    items: ['globe-black', 'globe-white']
+  },
+  {
+    title: 'Catalog',
+    items: ['catalog-black', 'catalog-white']
+  },
+  {
+    title: 'Phone',
+    items: ['phone-colored', 'phone-black', 'phone-white']
+  },
+  {
+    title: 'Bank Card',
+    items: ['bankcard-colored', 'bankcard-black', 'bankcard-white']
+  }
+];
+
+const Sidebar = memo(function Sidebar({
   onOpenTemplateManager,
   onUploadImage,
   onImportIcon,
@@ -57,104 +106,54 @@ export default function Sidebar({
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(null);
 
-  const {
-    isUploading,
-    backgroundColor,
-    setBackgroundColor,
-    startExport,
-    setInteractionMode,
-    theme,
-    toggleTheme
-  } = useStore();
+  const isUploading = useStore((state) => state.isUploading);
+  const startExport = useStore((state) => state.startExport);
+  const setInteractionMode = useStore((state) => state.setInteractionMode);
+  const theme = useStore((state) => state.theme);
+  const toggleTheme = useStore((state) => state.toggleTheme);
 
-  const toggleSection = (section) => setActiveSection(activeSection === section ? null : section);
-  const handleUploadClick = () => {
+  const toggleSection = useCallback((section) => {
+    setActiveSection((prev) => (prev === section ? null : section));
+  }, []);
+  const handleUploadClick = useCallback(() => {
     setIsOpen(false);
     onOpenTemplateManager();
-  };
-  const handleExportClick = () => { setIsOpen(false); startExport(); };
-  const handleChangeColorClick = () => {
+  }, [onOpenTemplateManager]);
+  const handleExportClick = useCallback(() => {
+    setIsOpen(false);
+    startExport();
+  }, [startExport]);
+  const handleChangeColorClick = useCallback(() => {
     if (!canManageTemplate) return;
     setInteractionMode('color');
     setIsOpen(false);
-  };
-  const handleImageUploadClick = () => {
+  }, [canManageTemplate, setInteractionMode]);
+  const handleImageUploadClick = useCallback(() => {
     if (!canManageTemplate) return;
     setIsOpen(false);
     onUploadImage();
-  };
-  const handleOpenTextClick = () => {
+  }, [canManageTemplate, onUploadImage]);
+  const handleOpenTextClick = useCallback(() => {
     if (!canManageTemplate) return;
     setIsOpen(false);
     onOpenTextModal();
-  };
-  const handleOpenQrClick = () => {
+  }, [canManageTemplate, onOpenTextModal]);
+  const handleOpenQrClick = useCallback(() => {
     setIsOpen(false);
     onOpenQrGenerator();
-  };
-  const handleImportIconClick = (icon) => {
+  }, [onOpenQrGenerator]);
+  const handleImportIconClick = useCallback((icon) => {
     if (!canManageTemplate) return;
     const confirmed = window.confirm(`Import ${icon.label}?`);
     if (!confirmed) return;
     onImportIcon(icon);
     setIsOpen(false);
-  };
-
-  // --- OPTIMIZED VARIANTS (Snappy, Premium Feel) ---
-  const sidebarVariants = {
-    closed: { x: "-100%", transition: { type: "spring", stiffness: 400, damping: 40 } },
-    open: { x: 0, transition: { type: "spring", stiffness: 400, damping: 40 } }
-  };
-
-  const iconVariants = {
-    closed: { rotate: 0 },
-    open: { rotate: 90 }
-  };
-
-  const iconSections = [
-    {
-      title: 'Instagram',
-      items: ['instagram-colored', 'instagram-black', 'instagram-white']
-    },
-    {
-      title: 'Telegram',
-      items: ['telegram-colored', 'telegram-black', 'telegram-white']
-    },
-    {
-      title: 'Whatsapp',
-      items: ['whatsapp-colored', 'whatsapp-black', 'whatsapp-white']
-    },
-    {
-      title: 'Linkedin',
-      items: ['linkedin-colored', 'linkedin-black', 'linkedin-white']
-    },
-    {
-      title: 'Rubika',
-      items: ['rubika-colored', 'rubika-black', 'rubika-white']
-    },
-    {
-      title: 'Website',
-      items: ['globe-black', 'globe-white']
-    },
-    {
-      title: 'Catalog',
-      items: ['catalog-black', 'catalog-white']
-    },
-    {
-      title: 'Phone',
-      items: ['phone-colored', 'phone-black', 'phone-white']
-    },
-    {
-      title: 'Bank Card',
-      items: ['bankcard-colored', 'bankcard-black', 'bankcard-white']
-    }
-  ];
+  }, [canManageTemplate, onImportIcon]);
 
   return (
     <>
       <style>{sidebarStyles}</style>
 
-      {/* 1. MINIMAL TOGGLE */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         style={{
@@ -193,7 +192,8 @@ export default function Sidebar({
           borderRight: '1px solid var(--border)',
           zIndex: 45, padding: '80px 24px 20px 24px',
           display: 'flex', flexDirection: 'column',
-          boxShadow: 'var(--shadow)'
+          boxShadow: 'var(--shadow)',
+          willChange: 'transform'
         }}
       >
         <motion.button
@@ -409,13 +409,7 @@ export default function Sidebar({
                   initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}
                 >
-                  <div style={{ padding: '12px', background: 'var(--panel-2)', borderRadius: '10px', border: '1px solid var(--border)', marginTop: '4px' }}>
-                    <div className="custom-picker"><HexColorPicker color={backgroundColor} onChange={setBackgroundColor} /></div>
-                    <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--panel-3)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)' }}>
-                      <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: backgroundColor, border: '1px solid var(--border)' }} />
-                      <input type="text" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: '11px', width: '100%', outline: 'none', textTransform: 'uppercase' }} />
-                    </div>
-                  </div>
+                  <EnvironmentControls />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -514,7 +508,7 @@ export default function Sidebar({
       </motion.div>
     </>
   );
-}
+});
 
 function SectionHeader({ children }) {
   return <h3 style={{ color: 'var(--text-muted)', fontSize: '10px', letterSpacing: '2px', fontWeight: '600', marginBottom: '8px', marginTop: '16px' }}>{children}</h3>;
@@ -524,7 +518,7 @@ function LoadingSpinner() {
   return <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}><Upload size={16} /></motion.div>;
 }
 
-function SidebarButton({ icon, label, onClick, primary = false, disabled = false, isActive = false, hasArrow = false, small = false, onArrowClick }) {
+const SidebarButton = memo(function SidebarButton({ icon, label, onClick, primary = false, disabled = false, isActive = false, hasArrow = false, small = false, onArrowClick }) {
   return (
       <motion.button
         whileHover={!disabled ? { x: 4, backgroundColor: primary ? 'var(--accent)' : 'var(--panel-2)' } : {}}
@@ -547,11 +541,19 @@ function SidebarButton({ icon, label, onClick, primary = false, disabled = false
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>{icon}<span>{label}</span></div>
       {hasArrow && (
-        <motion.button
-          type="button"
+        <motion.div
+          role="button"
+          tabIndex={0}
           onClick={(event) => {
             event.stopPropagation();
             onArrowClick?.();
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              event.stopPropagation();
+              onArrowClick?.();
+            }
           }}
           style={{
             background: 'transparent',
@@ -567,8 +569,52 @@ function SidebarButton({ icon, label, onClick, primary = false, disabled = false
           <motion.div animate={{ rotate: isActive ? 180 : 0 }}>
             <ChevronDown size={14} color={isActive ? "var(--text-primary)" : "var(--text-muted)"} />
           </motion.div>
-        </motion.button>
+        </motion.div>
       )}
     </motion.button>
   );
-}
+});
+
+const EnvironmentControls = memo(function EnvironmentControls() {
+  const backgroundColor = useStore((state) => state.backgroundColor);
+  const setBackgroundColor = useStore((state) => state.setBackgroundColor);
+  const [localColor, setLocalColor] = useState(backgroundColor);
+
+  useEffect(() => {
+    setLocalColor(backgroundColor);
+  }, [backgroundColor]);
+
+  const handleCommit = useCallback(() => {
+    if (localColor !== backgroundColor) {
+      setBackgroundColor(localColor);
+    }
+  }, [backgroundColor, localColor, setBackgroundColor]);
+
+  const handleInputChange = useCallback((event) => {
+    setLocalColor(event.target.value);
+  }, []);
+
+  const safeColor = useMemo(() => localColor || '#FFFFFF', [localColor]);
+
+  return (
+    <div
+      style={{ padding: '12px', background: 'var(--panel-2)', borderRadius: '10px', border: '1px solid var(--border)', marginTop: '4px' }}
+      onPointerUp={handleCommit}
+      onMouseLeave={handleCommit}
+    >
+      <div className="custom-picker"><HexColorPicker color={safeColor} onChange={setLocalColor} /></div>
+      <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--panel-3)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+        <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: safeColor, border: '1px solid var(--border)' }} />
+        <input
+          type="text"
+          value={safeColor}
+          onChange={handleInputChange}
+          onBlur={handleCommit}
+          style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: '11px', width: '100%', outline: 'none', textTransform: 'uppercase' }}
+        />
+      </div>
+    </div>
+  );
+});
+
+export default Sidebar;

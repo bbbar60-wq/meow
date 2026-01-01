@@ -3,7 +3,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import useStore from '../store';
 
 export default function ExportOverlay() {
-  const { isExporting, exportProgress, cancelExport } = useStore();
+  const isExporting = useStore((state) => state.isExporting);
+  const exportProgress = useStore((state) => state.exportProgress);
+  const cancelExport = useStore((state) => state.cancelExport);
+
   return (
     <AnimatePresence>
       {isExporting && (

@@ -1,19 +1,19 @@
-import React from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import ControlRow from './ControlRow';
 
-export default function AssetEditorPanel({ image, onClose, onChange, title, showCornerRadius = false, scaleLabel }) {
-  const position = image.position ?? { x: 0, y: 0, z: 0 };
-  const rotation = image.rotation ?? { x: 0, y: 0, z: 0 };
+const AssetEditorPanel = memo(function AssetEditorPanel({ image, onClose, onChange, title, showCornerRadius = false, scaleLabel }) {
+  const position = useMemo(() => image.position ?? { x: 0, y: 0, z: 0 }, [image.position]);
+  const rotation = useMemo(() => image.rotation ?? { x: 0, y: 0, z: 0 }, [image.rotation]);
   const scale = Number.isFinite(image.scale) ? image.scale : 1;
   const cornerRadius = Number.isFinite(image.cornerRadius) ? image.cornerRadius : 0;
 
-  const handlePositionChange = (axis, value) => {
+  const handlePositionChange = useCallback((axis, value) => {
     onChange({ position: { ...position, [axis]: value } });
-  };
+  }, [onChange, position]);
 
-  const handleRotationChange = (axis, value) => {
+  const handleRotationChange = useCallback((axis, value) => {
     onChange({ rotation: { ...rotation, [axis]: value } });
-  };
+  }, [onChange, rotation]);
 
   return (
     <div
@@ -29,7 +29,9 @@ export default function AssetEditorPanel({ image, onClose, onChange, title, show
         padding: '14px',
         color: 'var(--text-secondary)',
         fontFamily: '"Inter", sans-serif',
-        boxShadow: 'var(--shadow)'
+        boxShadow: 'var(--shadow)',
+        transform: 'translateZ(0)',
+        willChange: 'transform'
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -123,4 +125,6 @@ export default function AssetEditorPanel({ image, onClose, onChange, title, show
       )}
     </div>
   );
-}
+});
+
+export default AssetEditorPanel;
