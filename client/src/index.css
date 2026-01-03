@@ -54,6 +54,61 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.slider-input {
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent), transparent 65%), color-mix(in srgb, var(--panel-3), transparent 10%));
+  border: 1px solid var(--border);
+  outline: none;
+}
+
+.slider-input::-webkit-slider-thumb {
+  appearance: none;
+  width: 0;
+  height: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.slider-input::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent), transparent 65%), color-mix(in srgb, var(--panel-3), transparent 10%));
+}
+
+.slider-input::-moz-range-thumb {
+  width: 0;
+  height: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.slider-input::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent), transparent 65%), color-mix(in srgb, var(--panel-3), transparent 10%));
+}
+
+.slider-input::-ms-thumb {
+  width: 0;
+  height: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.slider-input::-ms-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent), transparent 65%), color-mix(in srgb, var(--panel-3), transparent 10%));
+  border-color: transparent;
+  color: transparent;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

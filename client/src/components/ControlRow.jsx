@@ -59,6 +59,7 @@ const ControlRow = memo(function ControlRow({ label, value, min, max, step, onCh
       </div>
       <input
         type="range"
+        className="slider-input"
         value={localValue}
         min={min}
         max={max}

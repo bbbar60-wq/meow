@@ -107,9 +107,10 @@ const AssetEditorPanel = memo(function AssetEditorPanel({ image, onClose, onChan
       <ControlRow
         label={scaleLabel}
         value={scale}
-        min={-10}
+        min={0}
         max={10}
         step={0.001}
+        allowNegative={false}
         onChange={(value) => onChange({ scale: value })}
       />
       {showCornerRadius && (

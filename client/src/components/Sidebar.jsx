@@ -14,6 +14,7 @@ const sidebarStyles = `
 .custom-picker .react-colorful__pointer { width: 16px; height: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
 .sidebar-scroll {
   overflow-y: auto;
+  overflow-x: visible;
   scrollbar-gutter: stable;
   padding-right: 6px;
 }
@@ -405,7 +406,14 @@ const Sidebar = memo(function Sidebar({
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <SidebarButton icon={<ImageIcon size={16} />} label="Environment" onClick={() => toggleSection('background')} isActive={activeSection === 'background'} hasArrow />
+            <SidebarButton
+              icon={<ImageIcon size={16} />}
+              label="Environment"
+              onClick={() => toggleSection('background')}
+              onArrowClick={() => toggleSection('background')}
+              isActive={activeSection === 'background'}
+              hasArrow
+            />
             <AnimatePresence>
               {activeSection === 'background' && (
                 <MotionDiv
@@ -425,6 +433,7 @@ const Sidebar = memo(function Sidebar({
               icon={<ImageIcon size={16} />}
               label="Import Icon"
               onClick={() => toggleSection('icons')}
+              onArrowClick={() => toggleSection('icons')}
               isActive={activeSection === 'icons'}
               hasArrow
               disabled={!canManageTemplate}
@@ -436,15 +445,15 @@ const Sidebar = memo(function Sidebar({
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  style={{ overflow: 'hidden' }}
+                  style={{ overflow: 'visible' }}
                 >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '10px 0 6px 14px', borderLeft: '1px solid var(--border)', marginLeft: '12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '10px 0 6px 14px', borderLeft: '1px solid var(--border)', marginLeft: '12px', overflow: 'visible' }}>
                     {iconSections.map((section) => (
-                      <div key={section.title} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div key={section.title} style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflow: 'visible' }}>
                         <div style={{ color: 'var(--text-muted)', fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase' }}>
                           {section.title}
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', overflow: 'visible' }}>
                           {section.items.map((iconName) => (
                             <MotionButton
                               key={iconName}

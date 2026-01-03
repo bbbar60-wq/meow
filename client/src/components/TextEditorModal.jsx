@@ -172,28 +172,41 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
             height: 18px;
             box-shadow: 0 6px 16px rgba(0,0,0,0.3);
           }
+          .text-editor-panel .styled-scrollbar::-webkit-scrollbar {
+            width: 6px;
+          }
+          .text-editor-panel .styled-scrollbar::-webkit-scrollbar-track {
+            background: color-mix(in srgb, var(--panel-2), transparent 50%);
+            border-radius: 999px;
+          }
+          .text-editor-panel .styled-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent-2), transparent 40%));
+            border-radius: 999px;
+            border: 1px solid color-mix(in srgb, var(--panel), transparent 60%);
+          }
+          .text-editor-panel .styled-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, color-mix(in srgb, var(--accent), white 10%), color-mix(in srgb, var(--accent-2), transparent 20%));
+          }
+          .text-editor-panel .styled-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: color-mix(in srgb, var(--accent), transparent 20%) color-mix(in srgb, var(--panel-2), transparent 50%);
+          }
         `}</style>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-muted)' }}>IMPORT TEXT</div>
-            <div style={{ fontSize: '16px', fontWeight: 600, marginTop: '6px' }}>Minimal typography controls</div>
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'right' }}>
-            Manage size, rotation, and coordinates from
-            <br />
-            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Text Settings</span>.
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '24px' }}>
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, display: 'grid', gridTemplateRows: '1fr auto', gap: '16px' }}>
             <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '12px' }}>TEXT PREVIEW</div>
             <div
               style={{
                 border: '1px solid var(--border)',
                 borderRadius: '18px',
                 padding: form.padding,
-                minHeight: '240px',
+                height: '240px',
                 background: 'linear-gradient(145deg, color-mix(in srgb, var(--panel-2), transparent 10%), var(--panel-2))',
                 position: 'relative',
                 overflow: 'hidden'
@@ -203,6 +216,7 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
                 value={form.content}
                 onChange={(event) => updateForm('content', event.target.value)}
                 placeholder="Type your text..."
+                className="styled-scrollbar"
                 style={{
                   width: '100%',
                   height: '100%',
@@ -219,18 +233,41 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
                   lineHeight: form.lineHeight,
                   letterSpacing: `${form.letterSpacing}px`,
                   textTransform: form.textTransform,
-                  maxWidth: `${form.maxWidth}px`,
-                  maxHeight: `${form.maxHeight}px`,
                   overflow: 'auto'
                 }}
               />
+            </div>
+            <div style={{ display: 'grid', gap: '10px' }}>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Alignment</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {['left', 'right'].map((alignment) => (
+                  <button
+                    key={alignment}
+                    onClick={() => updateForm('alignment', alignment)}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '12px',
+                      border: `1px solid ${form.alignment === alignment ? 'var(--accent)' : 'var(--border)'}`,
+                      background: form.alignment === alignment ? 'color-mix(in srgb, var(--accent), transparent 75%)' : 'var(--panel-2)',
+                      color: form.alignment === alignment ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      letterSpacing: '0.6px',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {alignment}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
+              display: 'grid',
+              gridTemplateRows: '1fr auto',
               gap: '16px'
             }}
           >
@@ -272,7 +309,6 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
                 </div>
               </div>
             </div>
-
             <div style={{ display: 'grid', gap: '10px' }}>
               <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Font</label>
               <select value={form.fontFamily} onChange={(event) => updateForm('fontFamily', event.target.value)}>
@@ -280,35 +316,6 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
                   <option key={font.label} value={font.value}>{font.label}</option>
                 ))}
               </select>
-            </div>
-
-            <div style={{ display: 'grid', gap: '10px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Alignment</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                {['left', 'right'].map((alignment) => (
-                  <button
-                    key={alignment}
-                    onClick={() => updateForm('alignment', alignment)}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: '12px',
-                      border: `1px solid ${form.alignment === alignment ? 'var(--accent)' : 'var(--border)'}`,
-                      background: form.alignment === alignment ? 'color-mix(in srgb, var(--accent), transparent 75%)' : 'var(--panel-2)',
-                      color: form.alignment === alignment ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      letterSpacing: '0.6px',
-                      textTransform: 'uppercase'
-                    }}
-                  >
-                    {alignment}
-                  </button>
-                ))}
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                Left aligns for English text. Right aligns for Persian text.
-              </div>
             </div>
           </div>
         </div>

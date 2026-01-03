@@ -238,13 +238,34 @@ export default function QRGeneratorModal({ isOpen, onClose, onCreate }) {
             />
             <div style={{ display: 'grid', gap: '12px', marginTop: '14px' }}>
               <ControlRow label={`Logo Size (${logoSize}%)`}>
-                <input type="range" min="10" max="40" value={logoSize} onChange={(e) => setLogoSize(Number(e.target.value))} />
+                <input
+                  className="slider-input"
+                  type="range"
+                  min="10"
+                  max="40"
+                  value={logoSize}
+                  onChange={(e) => setLogoSize(Number(e.target.value))}
+                />
               </ControlRow>
               <ControlRow label={`Logo Corner Radius (${logoCornerRadius}px)`}>
-                <input type="range" min="0" max="40" value={logoCornerRadius} onChange={(e) => setLogoCornerRadius(Number(e.target.value))} />
+                <input
+                  className="slider-input"
+                  type="range"
+                  min="0"
+                  max="40"
+                  value={logoCornerRadius}
+                  onChange={(e) => setLogoCornerRadius(Number(e.target.value))}
+                />
               </ControlRow>
               <ControlRow label={`QR Size (${qrSize}px)`}>
-                <input type="range" min="220" max="1200" value={qrSize} onChange={(e) => setQrSize(Number(e.target.value))} />
+                <input
+                  className="slider-input"
+                  type="range"
+                  min="220"
+                  max="1200"
+                  value={qrSize}
+                  onChange={(e) => setQrSize(Number(e.target.value))}
+                />
               </ControlRow>
             </div>
           </section>

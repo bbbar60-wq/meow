@@ -628,6 +628,7 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
         const position = text.position ?? { x: 0, y: 0, z: 0 };
         const rotation = text.rotation ?? { x: 0, y: 0, z: 0 };
         const scale = Number.isFinite(text.scale) ? text.scale : 1;
+        if (position.y < 0) return null;
 
         const safeWidth = Number.isFinite(width) && width > 0 ? width : 1;
         const safeHeight = Number.isFinite(height) && height > 0 ? height : 1;
@@ -652,8 +653,8 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
               map={texture}
               transparent
               alphaTest={0.01}
-              depthTest={false}
-              depthWrite={false}
+              depthTest
+              depthWrite
               side={THREE.DoubleSide}
               polygonOffset
               polygonOffsetFactor={-2}
@@ -678,7 +679,19 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
              >
                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
                  <span style={{ color: 'var(--text-muted)', fontSize: '10px', letterSpacing: '1px', fontWeight: '600' }}>COLOR</span>
-                 <button onClick={handleClosePopup} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0 }}>
+                 <button
+                   onClick={handleClosePopup}
+                   onMouseDown={(event) => event.preventDefault()}
+                   style={{
+                     background: 'none',
+                     border: 'none',
+                     color: 'var(--text-muted)',
+                     cursor: 'pointer',
+                     padding: 0,
+                     outline: 'none',
+                     boxShadow: 'none'
+                   }}
+                 >
                    <X size={14}/>
                  </button>
                </div>
