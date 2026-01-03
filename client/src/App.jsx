@@ -267,8 +267,8 @@ function App() {
       const newText = {
         id: `${Date.now()}-text`,
         ...textData,
-        position: { x: 0, y: 0, z: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
+        position: { x: 0, y: 0.01, z: 0 },
+        rotation: { x: -90, y: 0, z: 0 },
         scale: 1
       };
       setTexts((prev) => [...prev, newText]);
@@ -378,11 +378,13 @@ function App() {
 
   const handleOpenTemplate = useCallback((template) => {
     setModelUrl(template.modelUrl);
+    setBackgroundColor(template.backgroundColor);
     setImages(template.images || []);
     setTexts(template.texts || []);
     setMaterialOverrides(template.materialOverrides || {});
-    setBackgroundColor(template.backgroundColor || '#ded7cc');
     setActiveTemplateId(template.id);
+    setActiveImageId(null);
+    setActiveTextId(null);
     setIsTemplateModalOpen(false);
   }, [setBackgroundColor, setModelUrl]);
 
@@ -394,52 +396,53 @@ function App() {
 
   const handleTemplateUpload = useCallback(async (event) => {
     const file = event.target.files?.[0];
-    event.target.value = '';
     if (!file) return;
     const url = await uploadBlendFile(file);
-    if (!url) return;
-
-    setModelUrl(url);
-    setImages([]);
-    setTexts([]);
-    setMaterialOverrides({});
-    setBackgroundColor('#ded7cc');
-
-    const templateName = file.name.replace(/\.[^/.]+$/, '');
-    try {
-      const response = await api.post('/templates', {
-        name: templateName || 'Untitled Template',
+    if (url) {
+      const newTemplate = {
+        name: file.name.replace('.blend', ''),
         modelUrl: url,
-        backgroundColor: '#ded7cc',
+        previewUrl: null,
+        backgroundColor: '#252525',
         images: [],
         texts: [],
-        materialOverrides: {},
-        previewUrl: null
-      });
-      setTemplates((prev) => [response.data, ...prev]);
-      setActiveTemplateId(response.data.id);
-      setIsTemplateModalOpen(false);
-
-      setTimeout(() => {
-        saveTemplate(response.data.id);
-      }, 600);
-    } catch (error) {
-      console.error('Failed to create template', error);
+        materialOverrides: {}
+      };
+      try {
+        const response = await api.post('/templates', newTemplate);
+        setTemplates((prev) => [response.data, ...prev]);
+        setActiveTemplateId(response.data.id);
+        setModelUrl(response.data.modelUrl);
+        setBackgroundColor(response.data.backgroundColor);
+        setImages(response.data.images || []);
+        setTexts(response.data.texts || []);
+        setMaterialOverrides(response.data.materialOverrides || {});
+      } catch (error) {
+        console.error('Failed to save template', error);
+      }
     }
-  }, [api, saveTemplate, setBackgroundColor, setModelUrl, uploadBlendFile]);
+    event.target.value = '';
+  }, [api, uploadBlendFile, setBackgroundColor, setModelUrl]);
 
   useEffect(() => {
-    if (!activeTemplateId) return undefined;
-    const interval = setInterval(() => {
-      saveTemplate(activeTemplateId);
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [activeTemplateId, saveTemplate]);
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsTextModalOpen(false);
+        setIsTemplateModalOpen(false);
+        setIsQrModalOpen(false);
+        setPendingDeleteId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
-  useEffect(() => () => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, []);
 
   return (
@@ -531,16 +534,15 @@ function App() {
         <ambientLight intensity={0.7} />
         <rectAreaLight width={5} height={5} color="#ffffff" intensity={2} position={[2, 2, 5]} lookAt={[0, 0, 0]} />
 
-        {/* UPDATED GIZMO SETTINGS:
-            1. margin={[80, 80]} ensures it sits safely inside the screen limits.
-            2. hideNegativeAxes={false} shows the full XYZ structure (-x, -y, -z).
-        */}
-        <GizmoHelper alignment="top-right" margin={[80, 80]} renderPriority={1}>
+        <GizmoHelper alignment="top-right" margin={[64, 64]} renderPriority={2}>
           <GizmoViewport
             axisColors={['#ff3b30', '#4cd964', '#007aff']}
-            labelColor="white"
+            labelColor="#f5f4f8"
             hideNegativeAxes={false}
-            style={{ opacity: 0.8 }}
+            axisHeadScale={1.05}
+            axisScale={[0.85, 0.07, 0.07]}
+            font="600 18px Inter, system-ui, sans-serif"
+            style={{ opacity: 0.95 }}
           />
         </GizmoHelper>
 

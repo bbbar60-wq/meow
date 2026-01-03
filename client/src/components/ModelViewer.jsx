@@ -176,6 +176,35 @@ function applyTextTransforms(text, transform, caseControl) {
   return transformed;
 }
 
+const DEFAULT_TEXT_CONFIG = {
+  color: '#ffffff',
+  fontSize: 32,
+  fontFamily: 'Inter',
+  fontWeight: 500,
+  isBold: false,
+  isItalic: false,
+  alignment: 'left',
+  textDecoration: 'none',
+  backgroundColor: 'transparent',
+  textBackgroundColor: 'transparent',
+  highlightColor: 'transparent',
+  enableHighlight: false,
+  lineHeight: 1.3,
+  letterSpacing: 0,
+  textShadowColor: '#000000',
+  textShadowBlur: 0,
+  textShadowOffsetX: 0,
+  textShadowOffsetY: 0,
+  textTransform: 'none',
+  caseControl: 'none',
+  padding: 16,
+  maxWidth: 420,
+  maxHeight: 220,
+  textOverflow: 'wrap',
+  paragraphSpacing: 10,
+  verticalAlign: 'top'
+};
+
 function createTextTexture(textConfig) {
   const {
     content,
@@ -207,21 +236,48 @@ function createTextTexture(textConfig) {
     verticalAlign
   } = textConfig;
 
+  const safeMaxWidth = Number.isFinite(maxWidth) ? maxWidth : DEFAULT_TEXT_CONFIG.maxWidth;
+  const safeMaxHeight = Number.isFinite(maxHeight) ? maxHeight : DEFAULT_TEXT_CONFIG.maxHeight;
+  const safePadding = Number.isFinite(padding) ? padding : DEFAULT_TEXT_CONFIG.padding;
+  const safeFontSize = Number.isFinite(fontSize) ? fontSize : DEFAULT_TEXT_CONFIG.fontSize;
+  const safeFontFamily = typeof fontFamily === 'string' ? fontFamily : DEFAULT_TEXT_CONFIG.fontFamily;
+  const safeFontWeight = Number.isFinite(fontWeight) ? fontWeight : DEFAULT_TEXT_CONFIG.fontWeight;
+  const safeIsBold = typeof isBold === 'boolean' ? isBold : DEFAULT_TEXT_CONFIG.isBold;
+  const safeIsItalic = typeof isItalic === 'boolean' ? isItalic : DEFAULT_TEXT_CONFIG.isItalic;
+  const safeAlignment = typeof alignment === 'string' ? alignment : DEFAULT_TEXT_CONFIG.alignment;
+  const safeTextDecoration = typeof textDecoration === 'string' ? textDecoration : DEFAULT_TEXT_CONFIG.textDecoration;
+  const safeBackgroundColor = typeof backgroundColor === 'string' ? backgroundColor : DEFAULT_TEXT_CONFIG.backgroundColor;
+  const safeTextBackgroundColor = typeof textBackgroundColor === 'string' ? textBackgroundColor : DEFAULT_TEXT_CONFIG.textBackgroundColor;
+  const safeHighlightColor = typeof highlightColor === 'string' ? highlightColor : DEFAULT_TEXT_CONFIG.highlightColor;
+  const safeEnableHighlight = typeof enableHighlight === 'boolean' ? enableHighlight : DEFAULT_TEXT_CONFIG.enableHighlight;
+  const safeLineHeight = Number.isFinite(lineHeight) ? lineHeight : DEFAULT_TEXT_CONFIG.lineHeight;
+  const safeLetterSpacing = Number.isFinite(letterSpacing) ? letterSpacing : DEFAULT_TEXT_CONFIG.letterSpacing;
+  const safeTextShadowColor = typeof textShadowColor === 'string' ? textShadowColor : DEFAULT_TEXT_CONFIG.textShadowColor;
+  const safeTextShadowBlur = Number.isFinite(textShadowBlur) ? textShadowBlur : DEFAULT_TEXT_CONFIG.textShadowBlur;
+  const safeTextShadowOffsetX = Number.isFinite(textShadowOffsetX) ? textShadowOffsetX : DEFAULT_TEXT_CONFIG.textShadowOffsetX;
+  const safeTextShadowOffsetY = Number.isFinite(textShadowOffsetY) ? textShadowOffsetY : DEFAULT_TEXT_CONFIG.textShadowOffsetY;
+  const safeTextTransform = typeof textTransform === 'string' ? textTransform : DEFAULT_TEXT_CONFIG.textTransform;
+  const safeCaseControl = typeof caseControl === 'string' ? caseControl : DEFAULT_TEXT_CONFIG.caseControl;
+  const safeTextOverflow = typeof textOverflow === 'string' ? textOverflow : DEFAULT_TEXT_CONFIG.textOverflow;
+  const safeParagraphSpacing = Number.isFinite(paragraphSpacing) ? paragraphSpacing : DEFAULT_TEXT_CONFIG.paragraphSpacing;
+  const safeVerticalAlign = typeof verticalAlign === 'string' ? verticalAlign : DEFAULT_TEXT_CONFIG.verticalAlign;
+  const safeColor = typeof color === 'string' ? color : DEFAULT_TEXT_CONFIG.color;
+
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  const resolvedText = applyTextTransforms(content, textTransform, caseControl);
-  const fontStyle = `${isItalic ? 'italic' : 'normal'} ${isBold ? 700 : fontWeight} ${fontSize}px ${fontFamily}`;
+  const resolvedText = applyTextTransforms(content ?? '', safeTextTransform, safeCaseControl);
+  const fontStyle = `${safeIsItalic ? 'italic' : 'normal'} ${safeIsBold ? 700 : safeFontWeight} ${safeFontSize}px ${safeFontFamily}`;
   ctx.font = fontStyle;
   ctx.textBaseline = 'top';
 
-  const maxContentWidth = maxWidth - padding * 2;
+  const maxContentWidth = Math.max(1, safeMaxWidth - safePadding * 2);
   const words = resolvedText.split(/\s+/);
   const lines = [];
   let currentLine = '';
   words.forEach((word) => {
     const testLine = currentLine ? `${currentLine} ${word}` : word;
     const metrics = ctx.measureText(testLine);
-    if (metrics.width + letterSpacing * testLine.length > maxContentWidth && currentLine) {
+    if (metrics.width + safeLetterSpacing * testLine.length > maxContentWidth && currentLine) {
       lines.push(currentLine);
       currentLine = word;
     } else {
@@ -230,48 +286,48 @@ function createTextTexture(textConfig) {
   });
   if (currentLine) lines.push(currentLine);
 
-  const lineHeightPx = fontSize * lineHeight;
-  let totalHeight = lines.length * lineHeightPx + padding * 2;
-  if (paragraphSpacing) {
+  const lineHeightPx = Math.max(1, safeFontSize * safeLineHeight);
+  let totalHeight = lines.length * lineHeightPx + safePadding * 2;
+  if (safeParagraphSpacing) {
     const paragraphs = resolvedText.split(/\n\s*\n/);
-    totalHeight += Math.max(0, paragraphs.length - 1) * paragraphSpacing;
+    totalHeight += Math.max(0, paragraphs.length - 1) * safeParagraphSpacing;
   }
 
-  canvas.width = maxWidth;
-  canvas.height = Math.min(maxHeight, totalHeight);
+  canvas.width = Math.max(1, safeMaxWidth);
+  canvas.height = Math.max(1, Math.min(safeMaxHeight, totalHeight));
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = backgroundColor === 'transparent' ? 'rgba(0,0,0,0)' : backgroundColor;
+  ctx.fillStyle = safeBackgroundColor === 'transparent' ? 'rgba(0,0,0,0)' : safeBackgroundColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.font = fontStyle;
-  ctx.fillStyle = color;
+  ctx.fillStyle = safeColor;
   ctx.textBaseline = 'top';
-  ctx.shadowColor = textShadowColor;
-  ctx.shadowBlur = textShadowBlur;
-  ctx.shadowOffsetX = textShadowOffsetX;
-  ctx.shadowOffsetY = textShadowOffsetY;
+  ctx.shadowColor = safeTextShadowColor;
+  ctx.shadowBlur = safeTextShadowBlur;
+  ctx.shadowOffsetX = safeTextShadowOffsetX;
+  ctx.shadowOffsetY = safeTextShadowOffsetY;
 
-  let y = padding;
+  let y = safePadding;
   const contentHeight = lines.length * lineHeightPx;
-  if (verticalAlign === 'center') {
+  if (safeVerticalAlign === 'center') {
     y = (canvas.height - contentHeight) / 2;
   }
-  if (verticalAlign === 'bottom') {
-    y = canvas.height - contentHeight - padding;
+  if (safeVerticalAlign === 'bottom') {
+    y = canvas.height - contentHeight - safePadding;
   }
 
   const drawLine = (line, yPos) => {
-    let x = padding;
-    const lineWidth = ctx.measureText(line).width + letterSpacing * line.length;
-    if (alignment === 'center') x = (canvas.width - lineWidth) / 2;
-    if (alignment === 'right') x = canvas.width - lineWidth - padding;
-    if (alignment === 'justify' && line.includes(' ')) {
+    let x = safePadding;
+    const lineWidth = ctx.measureText(line).width + safeLetterSpacing * line.length;
+    if (safeAlignment === 'center') x = (canvas.width - lineWidth) / 2;
+    if (safeAlignment === 'right') x = canvas.width - lineWidth - safePadding;
+    if (safeAlignment === 'justify' && line.includes(' ')) {
       const wordsInLine = line.split(' ');
       const gapCount = wordsInLine.length - 1;
       const totalWordWidth = wordsInLine.reduce((sum, word) => sum + ctx.measureText(word).width, 0);
       const gapSize = (maxContentWidth - totalWordWidth) / gapCount;
-      let cursor = padding;
+      let cursor = safePadding;
       wordsInLine.forEach((word) => {
         ctx.fillText(word, cursor, yPos);
         cursor += ctx.measureText(word).width + gapSize;
@@ -279,27 +335,27 @@ function createTextTexture(textConfig) {
       return;
     }
 
-    if (textBackgroundColor !== 'transparent') {
-      ctx.fillStyle = textBackgroundColor;
+    if (safeTextBackgroundColor !== 'transparent') {
+      ctx.fillStyle = safeTextBackgroundColor;
       ctx.fillRect(x - 4, yPos - 2, lineWidth + 8, lineHeightPx + 4);
-      ctx.fillStyle = color;
+      ctx.fillStyle = safeColor;
     }
 
-    if (enableHighlight && highlightColor !== 'transparent') {
-      ctx.fillStyle = highlightColor;
+    if (safeEnableHighlight && safeHighlightColor !== 'transparent') {
+      ctx.fillStyle = safeHighlightColor;
       ctx.fillRect(x - 4, yPos - 2, lineWidth + 8, lineHeightPx + 4);
-      ctx.fillStyle = color;
+      ctx.fillStyle = safeColor;
     }
 
     ctx.fillText(line, x, yPos);
 
-    if (textDecoration !== 'none') {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = Math.max(1, fontSize / 14);
+    if (safeTextDecoration !== 'none') {
+      ctx.strokeStyle = safeColor;
+      ctx.lineWidth = Math.max(1, safeFontSize / 14);
       let decorationY = yPos + lineHeightPx;
-      if (textDecoration === 'underline') decorationY = yPos + lineHeightPx - 4;
-      if (textDecoration === 'overline') decorationY = yPos + 2;
-      if (textDecoration === 'line-through') decorationY = yPos + lineHeightPx / 2;
+      if (safeTextDecoration === 'underline') decorationY = yPos + lineHeightPx - 4;
+      if (safeTextDecoration === 'overline') decorationY = yPos + 2;
+      if (safeTextDecoration === 'line-through') decorationY = yPos + lineHeightPx / 2;
       ctx.beginPath();
       ctx.moveTo(x, decorationY);
       ctx.lineTo(x + lineWidth, decorationY);
@@ -307,14 +363,14 @@ function createTextTexture(textConfig) {
     }
   };
 
-  const maxLines = Math.floor((canvas.height - padding * 2) / lineHeightPx);
+  const maxLines = Math.max(1, Math.floor((canvas.height - safePadding * 2) / lineHeightPx));
   const renderLines = lines.slice(0, maxLines);
   renderLines.forEach((line, index) => {
     const lineY = y + index * lineHeightPx;
-    if (textOverflow === 'ellipsis' && index === maxLines - 1 && lines.length > maxLines) {
+    if (safeTextOverflow === 'ellipsis' && index === maxLines - 1 && lines.length > maxLines) {
       const ellipsis = `${line}…`;
       drawLine(ellipsis, lineY);
-    } else if (textOverflow === 'clip' && index === maxLines - 1 && lines.length > maxLines) {
+    } else if (safeTextOverflow === 'clip' && index === maxLines - 1 && lines.length > maxLines) {
       drawLine(line, lineY);
     } else {
       drawLine(line, lineY);
@@ -569,32 +625,36 @@ export default function ModelViewer({ url, images, texts, materialOverrides = {}
         const textureData = textTextureMap.get(text.id);
         if (!textureData) return null;
         const { texture, width, height } = textureData;
+        const position = text.position ?? { x: 0, y: 0, z: 0 };
+        const rotation = text.rotation ?? { x: 0, y: 0, z: 0 };
+        const scale = Number.isFinite(text.scale) ? text.scale : 1;
 
-        const aspect = width / height;
+        const safeWidth = Number.isFinite(width) && width > 0 ? width : 1;
+        const safeHeight = Number.isFinite(height) && height > 0 ? height : 1;
+        const aspect = safeWidth / safeHeight;
         const planeWidth = 1.2;
         const planeHeight = planeWidth / aspect;
 
         return (
           <mesh
             key={text.id}
-            position={[text.position.x, text.position.y, text.position.z]}
+            position={[position.x, position.y, position.z]}
             rotation={[
-              THREE.MathUtils.degToRad(text.rotation.x),
-              THREE.MathUtils.degToRad(text.rotation.y),
-              THREE.MathUtils.degToRad(text.rotation.z)
+              THREE.MathUtils.degToRad(rotation.x),
+              THREE.MathUtils.degToRad(rotation.y),
+              THREE.MathUtils.degToRad(rotation.z)
             ]}
-            scale={[text.scale, text.scale, text.scale]}
+            scale={[scale, scale, scale]}
             renderOrder={5}
           >
             <planeGeometry args={[planeWidth, planeHeight]} />
-            <meshStandardMaterial
+            <meshBasicMaterial
               map={texture}
               transparent
+              alphaTest={0.01}
               depthTest={false}
               depthWrite={false}
               side={THREE.DoubleSide}
-              roughness={0.38}
-              metalness={0.0}
               polygonOffset
               polygonOffsetFactor={-2}
             />

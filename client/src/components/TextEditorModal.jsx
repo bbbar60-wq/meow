@@ -1,5 +1,28 @@
 import React, { useMemo, useState } from 'react';
-import ControlRow from './ControlRow';
+import { HexColorPicker } from 'react-colorful';
+
+const FONT_OPTIONS = [
+  { label: 'Inter (English)', value: '"Inter", "Segoe UI", system-ui, sans-serif' },
+  { label: 'Poppins (English)', value: '"Poppins", "Inter", system-ui, sans-serif' },
+  { label: 'Montserrat (English)', value: '"Montserrat", "Inter", system-ui, sans-serif' },
+  { label: 'Georgia (English)', value: 'Georgia, "Times New Roman", serif' },
+  { label: 'Times New Roman (English)', value: '"Times New Roman", Times, serif' },
+  { label: 'Courier New (English)', value: '"Courier New", Courier, monospace' },
+  { label: 'Vazirmatn (Persian)', value: '"Vazirmatn", "Noto Sans Arabic", "Inter", sans-serif' },
+  { label: 'Noto Sans Arabic (Persian)', value: '"Noto Sans Arabic", "Vazirmatn", sans-serif' },
+  { label: 'Noto Naskh Arabic (Persian)', value: '"Noto Naskh Arabic", "Vazirmatn", serif' },
+  { label: 'IRANSans (Persian)', value: '"IRANSans", "Vazirmatn", sans-serif' },
+  { label: 'Yekan (Persian)', value: '"Yekan", "Vazirmatn", sans-serif' },
+  { label: 'Sahel (Persian)', value: '"Sahel", "Vazirmatn", sans-serif' },
+  { label: 'Shabnam (Persian)', value: '"Shabnam", "Vazirmatn", sans-serif' }
+];
+
+function normalizeHexInput(value) {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^#?([0-9a-fA-F]{6})$/);
+  if (!match) return null;
+  return `#${match[1].toUpperCase()}`;
+}
 
 export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
   const defaultState = useMemo(
@@ -8,7 +31,7 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
       content: '',
       color: '#ffffff',
       fontSize: 32,
-      fontFamily: 'Inter',
+      fontFamily: '"Inter", "Segoe UI", system-ui, sans-serif',
       fontWeight: 500,
       isBold: false,
       isItalic: false,
@@ -37,10 +60,39 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
     []
   );
 
-  const [form, setForm] = useState(() => ({ ...defaultState, ...(initialText || {}) }));
+  const [form, setForm] = useState(() => {
+    const next = { ...defaultState, ...(initialText || {}) };
+    if (!FONT_OPTIONS.some((option) => option.value === next.fontFamily)) {
+      next.fontFamily = FONT_OPTIONS[0].value;
+    }
+    if (!['left', 'right'].includes(next.alignment)) {
+      next.alignment = 'left';
+    }
+    return next;
+  });
+
+  const [localColor, setLocalColor] = useState(form.color);
 
   const updateForm = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleColorChange = (value) => {
+    setLocalColor(value);
+    updateForm('color', value);
+  };
+
+  const handleColorInputChange = (event) => {
+    const nextValue = event.target.value;
+    setLocalColor(nextValue);
+    const normalized = normalizeHexInput(nextValue);
+    if (normalized) {
+      updateForm('color', normalized);
+    }
+  };
+
+  const handleColorInputBlur = () => {
+    setLocalColor(form.color);
   };
 
   const handleSubmit = () => {
@@ -66,44 +118,83 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
       <div
         className="text-editor-panel"
         style={{
-          width: '880px',
+          width: '780px',
           maxWidth: '90vw',
           background: 'var(--panel)',
-          border: '1px solid var(--border)',
-          borderRadius: '20px',
-          padding: '20px',
+          border: '1px solid color-mix(in srgb, var(--border), transparent 10%)',
+          borderRadius: '24px',
+          padding: '24px',
           boxShadow: 'var(--shadow)',
           color: 'var(--text-primary)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '20px'
+          gap: '20px',
+          backdropFilter: 'blur(14px)'
         }}
       >
         <style>{`
           .text-editor-panel select,
-          .text-editor-panel input[type="color"],
           .text-editor-panel input[type="text"],
           .text-editor-panel input[type="number"] {
             background: var(--panel-2);
             border: 1px solid var(--border);
             color: var(--text-primary);
-            border-radius: 8px;
-            padding: 6px 8px;
+            border-radius: 10px;
+            padding: 8px 10px;
+          }
+          .text-editor-panel select {
+            appearance: none;
+            background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+              linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+            background-position: calc(100% - 16px) calc(1em + 2px), calc(100% - 12px) calc(1em + 2px);
+            background-size: 4px 4px, 4px 4px;
+            background-repeat: no-repeat;
+            padding-right: 28px;
           }
           .text-editor-panel input[type="checkbox"] {
             accent-color: var(--accent);
           }
+          .text-editor-panel .custom-picker .react-colorful {
+            width: 100%;
+            height: 140px;
+          }
+          .text-editor-panel .custom-picker .react-colorful__saturation {
+            border-radius: 12px;
+            border-bottom: none;
+          }
+          .text-editor-panel .custom-picker .react-colorful__hue {
+            height: 14px;
+            border-radius: 12px;
+            margin-top: 10px;
+          }
+          .text-editor-panel .custom-picker .react-colorful__pointer {
+            width: 18px;
+            height: 18px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+          }
         `}</style>
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '12px' }}>TEXT BOX</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-muted)' }}>IMPORT TEXT</div>
+            <div style={{ fontSize: '16px', fontWeight: 600, marginTop: '6px' }}>Minimal typography controls</div>
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'right' }}>
+            Manage size, rotation, and coordinates from
+            <br />
+            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Text Settings</span>.
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '24px' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '12px' }}>TEXT PREVIEW</div>
             <div
               style={{
                 border: '1px solid var(--border)',
-                borderRadius: '12px',
+                borderRadius: '18px',
                 padding: form.padding,
-                minHeight: '220px',
-                background: form.backgroundColor === 'transparent' ? 'var(--panel-2)' : form.backgroundColor,
+                minHeight: '240px',
+                background: 'linear-gradient(145deg, color-mix(in srgb, var(--panel-2), transparent 10%), var(--panel-2))',
                 position: 'relative',
                 overflow: 'hidden'
               }}
@@ -117,7 +208,7 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
                   height: '100%',
                   border: 'none',
                   outline: 'none',
-                  resize: form.allowResize ? 'both' : 'none',
+                  resize: 'none',
                   background: 'transparent',
                   color: form.color,
                   fontSize: `${form.fontSize}px`,
@@ -125,14 +216,12 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
                   fontWeight: form.isBold ? 700 : form.fontWeight,
                   fontStyle: form.isItalic ? 'italic' : 'normal',
                   textAlign: form.alignment,
-                  textDecoration: form.textDecoration,
                   lineHeight: form.lineHeight,
                   letterSpacing: `${form.letterSpacing}px`,
                   textTransform: form.textTransform,
-                  textShadow: `${form.textShadowOffsetX}px ${form.textShadowOffsetY}px ${form.textShadowBlur}px ${form.textShadowColor}`,
                   maxWidth: `${form.maxWidth}px`,
                   maxHeight: `${form.maxHeight}px`,
-                  overflow: form.textOverflow === 'ellipsis' ? 'hidden' : 'auto'
+                  overflow: 'auto'
                 }}
               />
             </div>
@@ -140,132 +229,86 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
 
           <div
             style={{
-              width: '240px',
-              borderLeft: '1px solid var(--border)',
-              paddingLeft: '20px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px',
-              maxHeight: '520px',
-              overflow: 'auto'
+              gap: '16px'
             }}
           >
-            <ControlRow label="Font Size" value={form.fontSize} min={8} max={200} step={1} onChange={(value) => updateForm('fontSize', value)} allowNegative={false} />
-            <ControlRow label="Line Height" value={form.lineHeight} min={0.8} max={3} step={0.05} onChange={(value) => updateForm('lineHeight', value)} allowNegative={false} />
-            <ControlRow label="Letter Spacing" value={form.letterSpacing} min={-5} max={20} step={0.1} onChange={(value) => updateForm('letterSpacing', value)} />
-            <ControlRow label="Padding" value={form.padding} min={0} max={60} step={1} onChange={(value) => updateForm('padding', value)} allowNegative={false} />
-            <ControlRow label="Max Width" value={form.maxWidth} min={120} max={800} step={1} onChange={(value) => updateForm('maxWidth', value)} allowNegative={false} />
-            <ControlRow label="Max Height" value={form.maxHeight} min={80} max={500} step={1} onChange={(value) => updateForm('maxHeight', value)} allowNegative={false} />
-            <ControlRow label="Paragraph Spacing" value={form.paragraphSpacing} min={0} max={60} step={1} onChange={(value) => updateForm('paragraphSpacing', value)} allowNegative={false} />
-
-            <div style={{ display: 'grid', gap: '8px' }}>
+            <div style={{ display: 'grid', gap: '10px' }}>
               <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Text Color</label>
-              <input type="color" value={form.color} onChange={(event) => updateForm('color', event.target.value)} />
+              <div style={{ padding: '12px', background: 'var(--panel-2)', borderRadius: '14px', border: '1px solid var(--border)' }}>
+                <div className="custom-picker">
+                  <HexColorPicker color={normalizeHexInput(localColor) ?? '#FFFFFF'} onChange={handleColorChange} />
+                </div>
+                <div
+                  style={{
+                    marginTop: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    background: 'var(--panel-3)',
+                    padding: '8px 10px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border)'
+                  }}
+                >
+                  <div style={{ width: '14px', height: '14px', borderRadius: '4px', background: form.color, border: '1px solid var(--border)' }} />
+                  <input
+                    type="text"
+                    value={localColor}
+                    onChange={handleColorInputChange}
+                    onBlur={handleColorInputBlur}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      fontFamily: 'monospace',
+                      fontSize: '11px',
+                      width: '100%',
+                      outline: 'none',
+                      textTransform: 'uppercase'
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Background Color</label>
-              <input type="color" value={form.backgroundColor} onChange={(event) => updateForm('backgroundColor', event.target.value)} />
-            </div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Text Background</label>
-              <input type="color" value={form.textBackgroundColor} onChange={(event) => updateForm('textBackgroundColor', event.target.value)} />
-            </div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Highlight Color</label>
-              <input type="color" value={form.highlightColor} onChange={(event) => updateForm('highlightColor', event.target.value)} />
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
-                <input type="checkbox" checked={form.enableHighlight} onChange={(event) => updateForm('enableHighlight', event.target.checked)} />
-                Enable Highlighting
-              </label>
-            </div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Font Family</label>
+
+            <div style={{ display: 'grid', gap: '10px' }}>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Font</label>
               <select value={form.fontFamily} onChange={(event) => updateForm('fontFamily', event.target.value)}>
-                <option value="Inter">Inter</option>
-                <option value="Arial">Arial</option>
-                <option value="Helvetica">Helvetica</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Courier New">Courier New</option>
-              </select>
-            </div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Font Weight</label>
-              <select value={form.fontWeight} onChange={(event) => updateForm('fontWeight', Number(event.target.value))}>
-                {[300, 400, 500, 600, 700, 800].map((weight) => (
-                  <option key={weight} value={weight}>{weight}</option>
+                {FONT_OPTIONS.map((font) => (
+                  <option key={font.label} value={font.value}>{font.label}</option>
                 ))}
               </select>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
-              <input type="checkbox" checked={form.isBold} onChange={(event) => updateForm('isBold', event.target.checked)} />
-              Bold
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
-              <input type="checkbox" checked={form.isItalic} onChange={(event) => updateForm('isItalic', event.target.checked)} />
-              Italic
-            </label>
-            <div style={{ display: 'grid', gap: '8px' }}>
+
+            <div style={{ display: 'grid', gap: '10px' }}>
               <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Alignment</label>
-              <select value={form.alignment} onChange={(event) => updateForm('alignment', event.target.value)}>
-                <option value="left">Left</option>
-                <option value="center">Center</option>
-                <option value="right">Right</option>
-                <option value="justify">Justify</option>
-              </select>
-            </div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Text Decoration</label>
-              <select value={form.textDecoration} onChange={(event) => updateForm('textDecoration', event.target.value)}>
-                <option value="none">None</option>
-                <option value="underline">Underline</option>
-                <option value="line-through">Strikethrough</option>
-                <option value="overline">Overline</option>
-              </select>
-            </div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Text Transform</label>
-              <select value={form.textTransform} onChange={(event) => updateForm('textTransform', event.target.value)}>
-                <option value="none">None</option>
-                <option value="uppercase">Uppercase</option>
-                <option value="lowercase">Lowercase</option>
-                <option value="capitalize">Capitalize</option>
-              </select>
-            </div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Letter Case Control</label>
-              <select value={form.caseControl} onChange={(event) => updateForm('caseControl', event.target.value)}>
-                <option value="none">None</option>
-                <option value="uppercase">Uppercase</option>
-                <option value="lowercase">Lowercase</option>
-              </select>
-            </div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Text Overflow</label>
-              <select value={form.textOverflow} onChange={(event) => updateForm('textOverflow', event.target.value)}>
-                <option value="wrap">Wrap</option>
-                <option value="ellipsis">Ellipsis</option>
-                <option value="clip">Clip</option>
-              </select>
-            </div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Vertical Align</label>
-              <select value={form.verticalAlign} onChange={(event) => updateForm('verticalAlign', event.target.value)}>
-                <option value="top">Top</option>
-                <option value="center">Center</option>
-                <option value="bottom">Bottom</option>
-              </select>
-            </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
-              <input type="checkbox" checked={form.allowResize} onChange={(event) => updateForm('allowResize', event.target.checked)} />
-              Resize Option
-            </label>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Text Shadow</label>
-              <input type="color" value={form.textShadowColor} onChange={(event) => updateForm('textShadowColor', event.target.value)} />
-              <ControlRow label="Shadow Blur" value={form.textShadowBlur} min={0} max={40} step={1} onChange={(value) => updateForm('textShadowBlur', value)} allowNegative={false} />
-              <ControlRow label="Shadow X" value={form.textShadowOffsetX} min={-20} max={20} step={1} onChange={(value) => updateForm('textShadowOffsetX', value)} />
-              <ControlRow label="Shadow Y" value={form.textShadowOffsetY} min={-20} max={20} step={1} onChange={(value) => updateForm('textShadowOffsetY', value)} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {['left', 'right'].map((alignment) => (
+                  <button
+                    key={alignment}
+                    onClick={() => updateForm('alignment', alignment)}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '12px',
+                      border: `1px solid ${form.alignment === alignment ? 'var(--accent)' : 'var(--border)'}`,
+                      background: form.alignment === alignment ? 'color-mix(in srgb, var(--accent), transparent 75%)' : 'var(--panel-2)',
+                      color: form.alignment === alignment ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      letterSpacing: '0.6px',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {alignment}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                Left aligns for English text. Right aligns for Persian text.
+              </div>
             </div>
           </div>
         </div>
@@ -277,8 +320,8 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
               background: 'transparent',
               border: '1px solid var(--border)',
               color: 'var(--text-secondary)',
-              padding: '10px 24px',
-              borderRadius: '10px',
+              padding: '10px 28px',
+              borderRadius: '12px',
               cursor: 'pointer'
             }}
           >
@@ -290,8 +333,8 @@ export default function TextEditorModal({ initialText, onCancel, onSubmit }) {
               background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
               border: '1px solid transparent',
               color: '#0c0d14',
-              padding: '10px 24px',
-              borderRadius: '10px',
+              padding: '10px 28px',
+              borderRadius: '12px',
               cursor: 'pointer'
             }}
           >
