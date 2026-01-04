@@ -49,10 +49,14 @@ function App() {
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const saveTimeoutRef = useRef(null);
   const templateDataRef = useRef({});
-  const api = useMemo(() => axios.create({
-    baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5000',
-    timeout: 10000
-  }), []);
+  const api = useMemo(() => {
+    const envBaseUrl = import.meta.env.VITE_API_URL;
+    const baseURL = envBaseUrl ?? `${window.location.protocol}//${window.location.hostname}:5000`;
+    return axios.create({
+      baseURL,
+      timeout: 10000
+    });
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;

@@ -196,7 +196,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
             console.log(`SUCCESS: GLB Created (${(stats.size / 1024).toFixed(2)} KB)`);
             if (stats.size === 0) return res.status(500).json({ error: 'Conversion resulted in empty file.' });
 
-            const publicUrl = `http://localhost:5000/uploads/${outputFileName}`;
+            const publicUrl = `${req.protocol}://${req.get('host')}/uploads/${outputFileName}`;
             res.json({ message: 'Conversion successful', url: publicUrl });
         } else {
             console.error("ERROR: Output file not found.");
@@ -206,4 +206,4 @@ app.post('/upload', upload.single('file'), (req, res) => {
 });
 
 const PORT = 5000;
-app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Backend running on port ${PORT}`));
